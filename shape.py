@@ -114,11 +114,11 @@ class SmashBoy(Shape):
     def __init__(self, row_no, column_no):
         super().__init__('SmashBoy', None, Colour.FIREBRICK, row_no, column_no, [0, 4], [[1, 4], [0, 5], [1, 5]])
 
-    def rotate(self, tetris_map):
-        pass
+#    def rotate(self, tetris_map):
+#        pass
 
     def prepare_for_rotate(self, tetris_map):
-        pass
+        return self.blocks, self.state          # pass 
 
 
 #
