@@ -3,6 +3,7 @@
 # Built-in libs
 import os
 import sys
+import argparse
 import logging
 from pathlib import Path
 
@@ -25,7 +26,16 @@ PETRIS_LOG_DIR = "logs"
 PETRIS_LOG_PATH = paths.BASE_DIR / PETRIS_LOG_DIR / PETRIS_LOG_FILE
 
 
-def main() -> int:
+def main(speed: int) -> int:
+    """
+    Main function for the game
+
+    Args:
+        speed (int): Speed at which the tetris piece gets dropped.
+
+    Returns:
+        int: Exit code
+    """
     
     exit_code = 0
     
@@ -33,13 +43,12 @@ def main() -> int:
         initialize_logger(log_path=PETRIS_LOG_PATH)
         
         logger.info("Starting Petris Game")
+        logger.info("Args: (speed=%s)", speed)
         
         # Positioned Window
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (100, 100)
 
-        #########
-        # CLOCK #
-        #########
+        # Main game clock that allows the piece to drop.
         clock = pygame.time.Clock()
 
         main_screen = pygame.display.set_mode((GameMetaData.screen_width, GameMetaData.screen_height))
@@ -53,7 +62,7 @@ def main() -> int:
             Scenes.active_scene.update()
             Scenes.active_scene.render(main_screen)
 
-            clock.tick(50)
+            clock.tick(speed)
     except Exception as ex:
         exit_code = 1
         logger.exception(ex)
@@ -64,4 +73,13 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    
+    parser = argparse.ArgumentParser()
+    
+    parser.add_argument("-s", "--speed", action="store", required=False, default=50, type=int,
+                        help="The speed at which the tetris piece gets dropped. "
+                        "Higher is faster. Default is 50.")
+    
+    args, _ = parser.parse_known_args()
+    
+    sys.exit(main(speed=args.speed))
