@@ -1,7 +1,10 @@
-from colour import *
-import pygame as pg
 import copy
 import random
+from enum import Enum
+
+import pygame
+
+from src.colour.colour import Colour
 
 
 def get_random_shape(map_row_no, map_column_no):
@@ -97,13 +100,13 @@ class Shape(object):
 
     def draw(self, screen):
         for i in self.blocks:
-            pg.draw.rect(screen, self.colour.value, (50 + (i[1] * 30), 50 + (i[0] * 30), 30, 30), 2)
-            pg.draw.rect(screen, self.colour.value, (50 + (i[1] * 30) + 5, 50 + (i[0] * 30) + 5, 21, 21))
+            pygame.draw.rect(screen, self.colour.value, (50 + (i[1] * 30), 50 + (i[0] * 30), 30, 30), 2)
+            pygame.draw.rect(screen, self.colour.value, (50 + (i[1] * 30) + 5, 50 + (i[0] * 30) + 5, 21, 21))
 
     def draw_next(self, screen, x_position):
         for i in self.blocks:
-            pg.draw.rect(screen, self.colour.value, (x_position + (i[1] * 15), 170 + (i[0] * 15), 15, 15))
-            pg.draw.rect(screen, Colour.BLACK.value, (x_position + (i[1] * 15), 170 + (i[0] * 15), 15, 15), 1)
+            pygame.draw.rect(screen, self.colour.value, (x_position + (i[1] * 15), 170 + (i[0] * 15), 15, 15))
+            pygame.draw.rect(screen, Colour.BLACK.value, (x_position + (i[1] * 15), 170 + (i[0] * 15), 15, 15), 1)
 
 
 #

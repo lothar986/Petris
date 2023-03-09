@@ -1,35 +1,52 @@
 import sys
+
 import pygame
 from pygame import mixer
-from shape import *
-from shape import get_random_shape
+
+from src import paths
+from src.shape.shape import get_random_shape
+from src.colour.colour import Colour, get_colour_by_number, get_colour_number_by_name
+
+# Paths
+RESOURCES_PATH = paths.BASE_DIR / "resources"
+
+# Audio files
+AUDIO_DIR = RESOURCES_PATH / "audio"
+BACKGROUND_WAV_PATH = AUDIO_DIR / "background.wav"
+CAN_ROTATE_WAV_PATH = AUDIO_DIR / "can_rotate.wav"
+TILT_ROTATE_WAV_PATH = AUDIO_DIR / "tilt_rotate.wav"
+SPEED_MODE_SOUND_WAV_PATH = AUDIO_DIR / "speed_mode.wav"
+
+# Font library
+TETRIS_FONTS_TFF_PATH = RESOURCES_PATH / "fonts" / "tetris_font.ttf"
+
 
 ########
 # INIT #
 ########
 
-pg.init()
+pygame.init()
 
 ####################
 # SOUNDS AND MUSIC #
 ####################
 
-mixer.music.load('background.wav')
+mixer.music.load(BACKGROUND_WAV_PATH)
 mixer.music.set_volume(0.2)
 mixer.music.play(-1)
 
-rotate_sound = mixer.Sound('can_rotate.wav')
+rotate_sound = mixer.Sound(CAN_ROTATE_WAV_PATH)
 rotate_sound.set_volume(1)
 
-tilt_rotate_sound = mixer.Sound('tilt_rotate.wav')
+tilt_rotate_sound = mixer.Sound(TILT_ROTATE_WAV_PATH)
 tilt_rotate_sound.set_volume(1)
 
-speed_mode_sound = mixer.Sound('speed_mode.wav')
+speed_mode_sound = mixer.Sound(SPEED_MODE_SOUND_WAV_PATH)
 speed_mode_sound.set_volume(1)
 
 
 class GameMetaData(object):
-    font_type = 'tetris_font.ttf'
+    font_type = TETRIS_FONTS_TFF_PATH
     map_row_no = 20
     map_column_no = 10
     screen_width = map_column_no * 30 + 250
@@ -63,10 +80,10 @@ class State(object):
 class SceneBase:
     def __init__(self):
         self.next = self
-        self.score_font = pg.font.Font(GameMetaData.font_type, 18)
-        self.full_line_font = pg.font.Font(GameMetaData.font_type, 18)
-        self.level_font = pg.font.Font(GameMetaData.font_type, 18)
-        self.next_font = pg.font.Font(GameMetaData.font_type, 16)
+        self.score_font = pygame.font.Font(GameMetaData.font_type, 18)
+        self.full_line_font = pygame.font.Font(GameMetaData.font_type, 18)
+        self.level_font = pygame.font.Font(GameMetaData.font_type, 18)
+        self.next_font = pygame.font.Font(GameMetaData.font_type, 16)
 
     def process_input(self, events):
         raise NotImplementedError("Uh-oh, you didn't override this (process_input) in the child class")
@@ -78,7 +95,7 @@ class SceneBase:
         raise NotImplementedError("Uh-oh, you didn't override this (render) in the child class")
 
     def draw_score_area(self, main_screen):
-        pg.draw.rect(main_screen, Colour.FIREBRICK.value, (GameMetaData.score_window_pos, 50, 155, 85), 1)
+        pygame.draw.rect(main_screen, Colour.FIREBRICK.value, (GameMetaData.score_window_pos, 50, 155, 85), 1)
         score_text = self.score_font.render("Score: " + str(State.score), True, Colour.WHITE.value)
         full_line_text = self.full_line_font.render("Lines: " + str(State.full_line_no), True,
                                                     Colour.WHITE.value)
@@ -89,17 +106,17 @@ class SceneBase:
         main_screen.blit(level_text, (GameMetaData.score_window_text_pos, 110))
 
         # Draw the next shape
-        pg.draw.rect(main_screen, Colour.FIREBRICK.value, (GameMetaData.score_window_pos, 140, 155, 80), 1)
+        pygame.draw.rect(main_screen, Colour.FIREBRICK.value, (GameMetaData.score_window_pos, 140, 155, 80), 1)
         next_text = self.next_font.render('Next: ', True, Colour.WHITE.value)
         main_screen.blit(next_text, (GameMetaData.score_window_text_pos - 15, 145))
 
     @staticmethod
     def draw_area_grid(main_screen):
         for row_no in range(0, GameMetaData.map_row_no + 1):
-            pg.draw.line(main_screen, Colour.LIGHT_BLUE.value, (GameMetaData.width_offset, 50 + (row_no * 30)),
+            pygame.draw.line(main_screen, Colour.LIGHT_BLUE.value, (GameMetaData.width_offset, 50 + (row_no * 30)),
                          (30 * GameMetaData.map_column_no + GameMetaData.width_offset, 50 + (row_no * 30)), 1)
             if row_no < GameMetaData.map_column_no + 1:
-                pg.draw.line(main_screen, Colour.LIGHT_BLUE.value, (GameMetaData.width_offset + (row_no * 30),
+                pygame.draw.line(main_screen, Colour.LIGHT_BLUE.value, (GameMetaData.width_offset + (row_no * 30),
                                                                     GameMetaData.height_offset),
                              (GameMetaData.width_offset + (row_no * 30),
                               30 * GameMetaData.map_row_no + GameMetaData.height_offset))
@@ -193,11 +210,11 @@ class TitleScene(SceneBase):
         menu_offset = 25 if self.is_continue else 0
         menu_background.center = (menu_rect.width / 2 + menu_rect.x,
                                   (menu_rect.height / 2 + menu_rect.y) - menu_offset)
-        pg.draw.rect(screen, Colour.BLACK.value, menu_background, 0)
-        pg.draw.rect(screen, Colour.WHITE.value, menu_background, 1)
+        pygame.draw.rect(screen, Colour.BLACK.value, menu_background, 0)
+        pygame.draw.rect(screen, Colour.WHITE.value, menu_background, 1)
 
         if self.is_game_over:
-            game_over_font = pg.font.Font(GameMetaData.font_type, 72)
+            game_over_font = pygame.font.Font(GameMetaData.font_type, 72)
             game_over_text = game_over_font.render("GAME OVER", True, Colour.RED.value)
             screen.blit(game_over_text,
                         game_over_text.get_rect(center=(GameMetaData.screen_center_width,
@@ -237,29 +254,29 @@ class GameScene(SceneBase):
         keys = pygame.key.get_pressed()
 
         for event in events:
-            if event.type == pg.QUIT:
+            if event.type == pygame.QUIT:
                 quit_game()
-            if event.type == pg.KEYDOWN:
-                if event.key == pg.K_ESCAPE:
+            if event.type == pygame.KEYDOWN:
+                if event.key == pygame.K_ESCAPE:
                     Scenes.titleScene.is_continue = True
                     Scenes.active_scene = Scenes.titleScene
-                if event.key == pg.K_LEFT:
+                if event.key == pygame.K_LEFT:
                     self.keyboard_speed = -2
                     self.moving_object[0].move_left(self.tetris_map)
-                if event.key == pg.K_RIGHT:
+                if event.key == pygame.K_RIGHT:
                     self.keyboard_speed = -2
                     self.moving_object[0].move_right(self.tetris_map)
-                if event.key == pg.K_DOWN and not self.super_speed_mode:
+                if event.key == pygame.K_DOWN and not self.super_speed_mode:
                     self.keyboard_speed = -2
                     self.moving_object[0].move_down(self.tetris_map)
                     State.score += 2
-                if event.key == pg.K_UP:
+                if event.key == pygame.K_UP:
                     could_rotate = self.moving_object[0].rotate(self.tetris_map)
                     if could_rotate:
                         rotate_sound.play()
                     else:
                         tilt_rotate_sound.play()
-                if event.key == pg.K_SPACE:
+                if event.key == pygame.K_SPACE:
                     if not self.super_speed_mode:
                         self.super_speed_mode = True
                         speed_mode_sound.play()
@@ -268,12 +285,12 @@ class GameScene(SceneBase):
                         self.super_speed_mode = False
                         self.calculate_speed()
 
-        if keys[pg.K_LEFT]:
+        if keys[pygame.K_LEFT]:
             self.keyboard_speed += 1
             if self.keyboard_speed >= 4:
                 self.keyboard_speed = 0
                 self.moving_object[0].move_left(self.tetris_map)
-        if keys[pg.K_RIGHT]:
+        if keys[pygame.K_RIGHT]:
             self.keyboard_speed += 1
             if self.keyboard_speed >= 4:
                 self.keyboard_speed = 0
@@ -303,15 +320,15 @@ class GameScene(SceneBase):
         if self.game_over:
             GameScene.draw_game_over()
 
-        pg.display.update()
+        pygame.display.update()
 
     def draw_used_blocks(self, main_screen):
         for row_no, row in enumerate(self.tetris_map):
             for column_no, column_value in enumerate(row):
                 if column_value != 0:
                     block_color = get_colour_by_number(column_value)
-                    pg.draw.rect(main_screen, block_color.value, (50 + (column_no * 30), 50 + (row_no * 30), 30, 30), 2)
-                    pg.draw.rect(main_screen, block_color.value, (50 + (column_no * 30) + 5, 50 + (row_no * 30) + 5, 21,
+                    pygame.draw.rect(main_screen, block_color.value, (50 + (column_no * 30), 50 + (row_no * 30), 30, 30), 2)
+                    pygame.draw.rect(main_screen, block_color.value, (50 + (column_no * 30) + 5, 50 + (row_no * 30) + 5, 21,
                                                                   21))
         SceneBase.draw_area_grid(main_screen)
 
