@@ -41,3 +41,7 @@ python3 src/petris.py
 ```bash
 python3 src/petris.py --speed 100
 ```
+
+# Acknowledgments
+
+-   https://docs.python.org/3/library/venv.html
