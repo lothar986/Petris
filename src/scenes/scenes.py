@@ -1,3 +1,4 @@
+import logging
 import sys
 
 import pygame
@@ -6,6 +7,8 @@ from pygame import mixer
 from src import paths
 from src.shape.shape import get_random_shape
 from src.colour.colour import Colour, get_colour_by_number, get_colour_number_by_name
+
+logger = logging.getLogger(__name__)
 
 # Paths
 RESOURCES_PATH = paths.BASE_DIR / "resources"
@@ -66,12 +69,16 @@ class Scenes(object):
 
 
 class State(object):
+    """Game state. Keeps track of scores and levels."""
     level = 1
     score = 0
     full_line_no = 0
 
     @staticmethod
     def reset_new_game():
+        
+        logger.info("Initializing Game")
+        
         State.score = 0
         State.full_line_no = 0
         State.level = 1
@@ -126,6 +133,7 @@ class SceneBase:
 
 
 class TitleScene(SceneBase):
+    """Main or pause menu scene."""
     def __init__(self):
         SceneBase.__init__(self)
         self._is_continue = False
@@ -157,33 +165,65 @@ class TitleScene(SceneBase):
         self._is_continue = False
         self.options = 1
 
-    def process_input(self, events):
+    def process_input(self, events) -> None:
+        """
+        Processes all keys that were pressed in main or pause menu.
+
+        Args:
+            events (List): List of event objects of the key pressed. Also detects mouseOver event.
+                           This list can hold more than one item if the user presses the keys quickly
+        """
+
         for event in events:
+            
+            # Press down action by the user.
             if event.type == pygame.KEYDOWN:
+                
+                # Moves down one item in the menu
                 if event.key == pygame.K_DOWN:
                     self.options += 1
                     if self.options > 3:
                         self.options = 0 if self.is_continue else 1
+                
+                # Moves up one item in the menu
                 if event.key == pygame.K_UP:
                     self.options -= 1
                     lower_limit = 0 if self.is_continue else 1
                     if self.options < lower_limit:
                         self.options = 3
-                if event.key == pygame.K_ESCAPE:
+                
+                # Pauses the game when the user presses the escape key.
+                if event.key == pygame.K_ESCAPE:    
+                    # Resumes game from menu
                     if self.is_continue:
+                        logger.info("Resuming game..")
                         Scenes.active_scene = Scenes.gameScene
+                
                 if event.key == pygame.K_RETURN or event.key == pygame.K_KP_ENTER:
-                    if self.options == 0:  # Continue
+                    # Resumes game from main menu
+                    if self.options == 0:
+                        logger.info("Resuming game..")
                         Scenes.active_scene = Scenes.gameScene
-                    if self.options == 1:  # New Game
+
+                    # Starts new game
+                    if self.options == 1:
+                        
+                        logger.info("Starting new game...")
+                        
                         self._is_game_over = False
                         State.reset_new_game()
                         Scenes.gameScene = GameScene()
                         Scenes.active_scene = Scenes.gameScene
-                    if self.options == 2:  # Options
+
+                    # Opens options menu when the user selects the "Options" button
+                    if self.options == 2:
                         pass
-                    if self.options == 3:  # Quit
+                    
+                    # Quits the game when the user selects the "Exit" button
+                    if self.options == 3:
                         quit_game()
+            
+            # Quits the game when
             if event.type == pygame.QUIT:
                 quit_game()
 
@@ -235,6 +275,7 @@ class TitleScene(SceneBase):
 
 
 class GameScene(SceneBase):
+    """Main tetris game scene. When the player is playing."""
     def __init__(self):
         SceneBase.__init__(self)
         self.empty_line = []
@@ -252,32 +293,52 @@ class GameScene(SceneBase):
 
     def process_input(self, events):
         keys = pygame.key.get_pressed()
-
+        
         for event in events:
+            
             if event.type == pygame.QUIT:
                 quit_game()
+            
+            # When the user performs an operation on the falling shape.
             if event.type == pygame.KEYDOWN:
+                
+                # Pauses when user hits escape key
                 if event.key == pygame.K_ESCAPE:
+                    # Pauses game. Opens pause menu
+                    logger.info("Pausing game...")
                     Scenes.titleScene.is_continue = True
                     Scenes.active_scene = Scenes.titleScene
+                
+                # Shifts shape to the left
                 if event.key == pygame.K_LEFT:
                     self.keyboard_speed = -2
                     self.moving_object[0].move_left(self.tetris_map)
+                
+                # Shifts shape to the right
                 if event.key == pygame.K_RIGHT:
                     self.keyboard_speed = -2
                     self.moving_object[0].move_right(self.tetris_map)
+                
+                # Pushes shape further down
                 if event.key == pygame.K_DOWN and not self.super_speed_mode:
                     self.keyboard_speed = -2
                     self.moving_object[0].move_down(self.tetris_map)
                     State.score += 2
+                
+                # Rotates the orientation of the shape counter-clockwise
                 if event.key == pygame.K_UP:
                     could_rotate = self.moving_object[0].rotate(self.tetris_map)
                     if could_rotate:
                         rotate_sound.play()
                     else:
                         tilt_rotate_sound.play()
+                
+                # Immediately drops shape down to the bottom.
                 if event.key == pygame.K_SPACE:
+                    
+                    # Sets the flag to speed up the shape
                     if not self.super_speed_mode:
+                        logger.info("Speeding piece down to the bottom")
                         self.super_speed_mode = True
                         speed_mode_sound.play()
                         self.movement_speed = 1
@@ -290,8 +351,10 @@ class GameScene(SceneBase):
             if self.keyboard_speed >= 4:
                 self.keyboard_speed = 0
                 self.moving_object[0].move_left(self.tetris_map)
+        
         if keys[pygame.K_RIGHT]:
             self.keyboard_speed += 1
+            
             if self.keyboard_speed >= 4:
                 self.keyboard_speed = 0
                 self.moving_object[0].move_right(self.tetris_map)
@@ -386,6 +449,12 @@ class GameScene(SceneBase):
             self.moving_object[0].move_down(self.tetris_map)
 
 
-def quit_game():
+def quit_game() -> None:
+    """Quits the game"""
+    
+    logger.info("Quitting Game...")
+    
     pygame.quit()
+    
+    # TODO: Dangerous to exit in here. Should exit from __main__.
     sys.exit()

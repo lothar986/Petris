@@ -50,13 +50,20 @@ def main(speed: int) -> int:
 
         # Main game clock that allows the piece to drop.
         clock = pygame.time.Clock()
-
+        
         main_screen = pygame.display.set_mode((GameMetaData.screen_width, GameMetaData.screen_height))
+        
         pygame.display.set_caption("Petris")
-
         Scenes.titleScene = TitleScene()
         Scenes.active_scene = Scenes.titleScene
+        
+        logger.debug("Initialized Game Clock: %s", clock)
+        logger.debug("Main Screen Built: %s", main_screen)
+        logger.debug("Scene Setup: (titleScene=%s, gameScene=%s, active_scene=%s)", 
+                     Scenes.titleScene, Scenes.gameScene, Scenes.active_scene)
 
+        logger.info("Spinning up GUI")
+        
         while True:
             Scenes.active_scene.process_input(pygame.event.get())
             Scenes.active_scene.update()
