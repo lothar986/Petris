@@ -20,7 +20,7 @@ Activate virtual environment:
 source venv/bin/activate
 ```
 
-To exit the virtualt environment:
+To exit the virtual environment:
 
 ```bash
 deactivate
