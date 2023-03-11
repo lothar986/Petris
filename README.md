@@ -20,6 +20,12 @@ Activate virtual environment:
 source venv/bin/activate
 ```
 
+To exit the virtual environment:
+
+```bash
+deactivate
+```
+
 ## Install Dependencies
 
 ```bash

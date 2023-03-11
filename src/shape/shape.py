@@ -1,10 +1,13 @@
 import copy
 import random
+import logging
 from enum import Enum
 
 import pygame
 
 from src.colour.colour import Colour
+
+logger = logging.getLogger(__name__)
 
 
 def get_random_shape(map_row_no, map_column_no):
@@ -44,60 +47,71 @@ class Shape(object):
         # Adding head to the blocks
         self.blocks.insert(0, self.head)
 
-    def rotate(self, tetris_map):
-        temp_blocks, temp_direction = self.prepare_for_rotate(tetris_map)
-
-        if self.can_rotate(temp_blocks, tetris_map):
-            self.state = temp_direction
-            self.blocks = copy.deepcopy(temp_blocks)
-            return True
-
-        return False
-
     def prepare_for_rotate(self, tetris_map):
         raise NotImplementedError
 
-    def can_rotate(self, blocks, tetris_map):
+    # Methods for validating movement.
+
+    def can_rotate(self, blocks, tetris_map) -> bool:
         for block in blocks:
             if block[0] < 0 or block[0] > self.row_no - 1 or \
                     block[1] < 0 or block[1] > self.column_no - 1 or tetris_map[block[0]][block[1]] != 0:
                 return False
         return True
 
-    def can_move_to_right(self, tetris_map):
+    def can_move_to_right(self, tetris_map) -> bool:
         for block in self.blocks:
             if block[1] >= self.column_no - 1 or tetris_map[block[0]][block[1] + 1] != 0:
                 return False
         return True
 
-    def can_move_to_left(self, tetris_map):
+    def can_move_to_left(self, tetris_map) -> bool:
         for block in self.blocks:
             if block[1] <= 0 or tetris_map[block[0]][block[1] - 1] != 0:
                 return False
         return True
 
-    def move_left(self, tetris_map):
-        if self.can_move_to_left(tetris_map):
-            for i in self.blocks:
-                i[1] -= 1
-
-    def move_right(self, tetris_map):
-        if not self.can_move_to_right(tetris_map):
-            return
-        for block in self.blocks:
-            block[1] += 1
-
-    def move_down(self, tetris_map):
-        if not self.is_finished_or_collided(tetris_map):
-            for block in self.blocks:
-                block[0] += 1
-
-    def is_finished_or_collided(self, tetris_map):
+    def is_finished_or_collided(self, tetris_map) -> bool:
         for block in self.blocks:
             if block[0] == self.row_no - 1 or tetris_map[block[0] + 1][block[1]] != 0:
                 return True
         return False
 
+    # Movement Controllers
+    
+    def rotate(self, tetris_map) -> bool:
+        temp_blocks, temp_direction = self.prepare_for_rotate(tetris_map)
+
+        if self.can_rotate(temp_blocks, tetris_map):
+            self.state = temp_direction
+            self.blocks = copy.deepcopy(temp_blocks)
+            return True
+        else:
+            logger.debug("Cannot rotate")
+            return False
+
+    def move_left(self, tetris_map):
+        if self.can_move_to_left(tetris_map):
+            for i in self.blocks:
+                i[1] -= 1
+        else:
+            logger.debug("Cannot move left")
+
+    def move_right(self, tetris_map):
+        if self.can_move_to_right(tetris_map):
+            for block in self.blocks:
+                block[1] += 1
+        else:
+            logger.debug("Cannot move right")
+
+    def move_down(self, tetris_map):
+        if not self.is_finished_or_collided(tetris_map):
+            for block in self.blocks:
+                block[0] += 1
+        else:
+            logger.debug("Collision")
+
+    # TODO: Figure out what these do.
     def draw(self, screen):
         for i in self.blocks:
             pygame.draw.rect(screen, self.colour.value, (50 + (i[1] * 30), 50 + (i[0] * 30), 30, 30), 2)
