@@ -9,6 +9,8 @@ from pathlib import Path
 
 # Third party libs
 import pygame
+from pygame.time import Clock
+from pygame.surface import Surface
 
 # NOTE: Going to set the paths in here before importing packages. 
 # NOTE: This is important for importing packages.
@@ -49,11 +51,14 @@ def main(speed: int) -> int:
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (100, 100)
 
         # Main game clock that allows the piece to drop.
-        clock = pygame.time.Clock()
+        clock: Clock = pygame.time.Clock()
         
-        main_screen = pygame.display.set_mode((GameMetaData.screen_width, GameMetaData.screen_height))
+        screen_size = (GameMetaData.screen_width, GameMetaData.screen_height)
+        main_screen: Surface = pygame.display.set_mode(size=screen_size)
         
+        # Title of the window header
         pygame.display.set_caption("Petris")
+        
         Scenes.titleScene = TitleScene()
         Scenes.active_scene = Scenes.titleScene
         
@@ -65,9 +70,9 @@ def main(speed: int) -> int:
         logger.info("Spinning up GUI")
         
         while True:
-            Scenes.active_scene.process_input(pygame.event.get())
+            Scenes.active_scene.process_input(events=pygame.event.get())
             Scenes.active_scene.update()
-            Scenes.active_scene.render(main_screen)
+            Scenes.active_scene.render(screen=main_screen)
 
             clock.tick(speed)
     except Exception as ex:

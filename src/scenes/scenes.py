@@ -1,8 +1,11 @@
 import logging
 import sys
+from typing import List, Tuple
 
 import pygame
 from pygame import mixer
+from pygame.event import Event
+from pygame.surface import Surface
 
 from src import paths
 from src.shape.shape import get_random_shape
@@ -23,17 +26,10 @@ SPEED_MODE_SOUND_WAV_PATH = AUDIO_DIR / "speed_mode.wav"
 # Font library
 TETRIS_FONTS_TFF_PATH = RESOURCES_PATH / "fonts" / "tetris_font.ttf"
 
-
-########
-# INIT #
-########
-
+# Init
 pygame.init()
 
-####################
-# SOUNDS AND MUSIC #
-####################
-
+# Sound and music mixer
 mixer.music.load(BACKGROUND_WAV_PATH)
 mixer.music.set_volume(0.2)
 mixer.music.play(-1)
@@ -49,6 +45,14 @@ speed_mode_sound.set_volume(1)
 
 
 class GameMetaData(object):
+    """
+    Collection of all assets of that make up the entire game's meta data.
+        - Action Sound
+        - Game Music
+        - Screen Dimensions
+        - Fonts
+    """
+
     font_type = TETRIS_FONTS_TFF_PATH
     map_row_no = 20
     map_column_no = 10
@@ -63,16 +67,16 @@ class GameMetaData(object):
 
 
 class Scenes(object):
-    titleScene = None
-    gameScene = None
-    active_scene = None
+    titleScene = None           # type: TitleScene
+    gameScene = None            # type: GameScene
+    active_scene = None         # type: TitleScene or GameScene
 
 
 class State(object):
     """Game state. Keeps track of scores and levels."""
-    level = 1
-    score = 0
-    full_line_no = 0
+    level: int = 1
+    score: int = 0
+    full_line_no: int = 0
 
     @staticmethod
     def reset_new_game():
@@ -85,6 +89,7 @@ class State(object):
 
 
 class SceneBase:
+    """Main window app scene base superclass."""
     def __init__(self):
         self.next = self
         self.score_font = pygame.font.Font(GameMetaData.font_type, 18)
@@ -92,7 +97,7 @@ class SceneBase:
         self.level_font = pygame.font.Font(GameMetaData.font_type, 18)
         self.next_font = pygame.font.Font(GameMetaData.font_type, 16)
 
-    def process_input(self, events):
+    def process_input(self, events: List[Event]):
         raise NotImplementedError("Uh-oh, you didn't override this (process_input) in the child class")
 
     def update(self):
@@ -101,24 +106,49 @@ class SceneBase:
     def render(self, screen):
         raise NotImplementedError("Uh-oh, you didn't override this (render) in the child class")
 
-    def draw_score_area(self, main_screen):
+    def draw_score_area(self, main_screen: Surface):
+        """
+        Draws the score area section
+        
+        Args:
+            main_screen: Surface or sandbox of the main window
+        
+        """
+        
         pygame.draw.rect(main_screen, Colour.FIREBRICK.value, (GameMetaData.score_window_pos, 50, 155, 85), 1)
+        
+        # Score label
         score_text = self.score_font.render("Score: " + str(State.score), True, Colour.WHITE.value)
+        
+        # Lines label
         full_line_text = self.full_line_font.render("Lines: " + str(State.full_line_no), True,
                                                     Colour.WHITE.value)
+        
+        # Level label
         level_text = self.level_font.render("Level: " + str(State.level), True, Colour.WHITE.value)
 
+        # Draw and display the rectangular score section on the main window
         main_screen.blit(score_text, (GameMetaData.score_window_text_pos, 60))
         main_screen.blit(full_line_text, (GameMetaData.score_window_text_pos, 85))
         main_screen.blit(level_text, (GameMetaData.score_window_text_pos, 110))
 
-        # Draw the next shape
+        # This is the 'Next' section where it displays the next shape
         pygame.draw.rect(main_screen, Colour.FIREBRICK.value, (GameMetaData.score_window_pos, 140, 155, 80), 1)
+        
+        # Next label
         next_text = self.next_font.render('Next: ', True, Colour.WHITE.value)
+        
+        # Draw the 'Next' rectangle section on the main window
         main_screen.blit(next_text, (GameMetaData.score_window_text_pos - 15, 145))
 
     @staticmethod
     def draw_area_grid(main_screen):
+        """
+        Draws the main playing grid
+
+        Args:
+            main_screen: Surface or sandbox of the main window
+        """
         for row_no in range(0, GameMetaData.map_row_no + 1):
             pygame.draw.line(main_screen, Colour.LIGHT_BLUE.value, (GameMetaData.width_offset, 50 + (row_no * 30)),
                          (30 * GameMetaData.map_column_no + GameMetaData.width_offset, 50 + (row_no * 30)), 1)
@@ -133,12 +163,12 @@ class SceneBase:
 
 
 class TitleScene(SceneBase):
-    """Main or pause menu scene."""
+    """Main/pause menu scene."""
     def __init__(self):
         SceneBase.__init__(self)
-        self._is_continue = False
-        self._is_game_over = False
-        self.options = 0 if self.is_continue else 1
+        self._is_continue: bool = False
+        self._is_game_over: bool = False
+        self.options: int = 0 if self.is_continue else 1
         self.default = Colour.WHITE.value
         self.selected = Colour.RED.value
         self.continue_font = pygame.font.Font(GameMetaData.font_type, 36)
@@ -147,7 +177,7 @@ class TitleScene(SceneBase):
         self.exit_game_font = pygame.font.Font(GameMetaData.font_type, 36)
 
     @property
-    def is_continue(self):
+    def is_continue(self) -> bool:
         return self._is_continue
 
     @is_continue.setter
@@ -165,7 +195,7 @@ class TitleScene(SceneBase):
         self._is_continue = False
         self.options = 1
 
-    def process_input(self, events) -> None:
+    def process_input(self, events: List[Event]) -> None:
         """
         Processes all keys that were pressed in main or pause menu.
 
@@ -230,7 +260,7 @@ class TitleScene(SceneBase):
     def update(self):
         pass
 
-    def render(self, screen):
+    def render(self, screen: Surface):
         logger.error("RENDER_TITLE")
         if not self.is_game_over:
             screen.fill(Colour.BLACK.value)
@@ -291,9 +321,13 @@ class GameScene(SceneBase):
         self.super_speed_mode = False
         self.game_over = False
 
-    def process_input(self, events):
+    def process_input(self, events: List[Event]):
+        """Process key presses in a running game
         
-        logger.error("PROCESS_INPUT_GAME")
+        Args:
+            events (List): List of event objects of the key pressed. Also detects mouseOver event.
+                           This list can hold more than one item if the user presses the keys quickly
+        """
         
         keys = pygame.key.get_pressed()
         
@@ -373,20 +407,20 @@ class GameScene(SceneBase):
     def draw_next_shape(self, main_screen):
         self.moving_object[1].draw_next(main_screen, GameMetaData.score_window_text_pos - 20)
 
-    def render(self, main_screen):
+    def render(self, screen):
         
         logger.error("RENDER_GAME")
         
-        main_screen.fill(Colour.BLACK.value)
+        screen.fill(Colour.BLACK.value)
 
         # Draw Scores
-        self.draw_score_area(main_screen)
+        self.draw_score_area(screen)
         # Draw next shape
-        self.draw_next_shape(main_screen)
+        self.draw_next_shape(screen)
         # Draw the moving object to the Screen
-        self.moving_object[0].draw(main_screen)
+        self.moving_object[0].draw(screen)
         # Draw the blocks that are occupied
-        self.draw_used_blocks(main_screen)
+        self.draw_used_blocks(screen)
 
         if self.game_over:
             GameScene.draw_game_over()
