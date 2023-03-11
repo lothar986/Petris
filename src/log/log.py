@@ -15,7 +15,7 @@ def initialize_logger(log_path: Path) -> None:
     """
     
     # Logging format
-    formatter = logging.Formatter("%(asctime)s.%(msecs)-3d %(levelname)-8s %(name)-20s "
+    formatter = logging.Formatter("%(asctime)s.%(msecs)-3d %(levelname)-8s %(name)s:%(lineno)-10s"
                                   "\t %(message)s",
                                   datefmt="%Y-%m-%d %H:%M:%S")
     
