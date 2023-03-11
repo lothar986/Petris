@@ -45,7 +45,7 @@ def main(speed: int) -> int:
         logger.info("Starting Petris Game")
         logger.info("Args: (speed=%s)", speed)
         
-        # Positioned Window
+        # Positioned Window on the screen
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (100, 100)
 
         # Main game clock that allows the piece to drop.

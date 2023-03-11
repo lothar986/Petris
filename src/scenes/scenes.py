@@ -338,7 +338,6 @@ class GameScene(SceneBase):
                     
                     # Sets the flag to speed up the shape
                     if not self.super_speed_mode:
-                        logger.info("Speeding piece down to the bottom")
                         self.super_speed_mode = True
                         speed_mode_sound.play()
                         self.movement_speed = 1
@@ -420,6 +419,8 @@ class GameScene(SceneBase):
 
             if not is_game_over:
                 temp = []
+                
+                # Full line score
                 full_line = 0
                 for row in list(reversed(self.tetris_map)):
                     if 0 not in row:

@@ -83,7 +83,6 @@ class Shape(object):
         temp_blocks, temp_direction = self.prepare_for_rotate(tetris_map)
 
         if self.can_rotate(temp_blocks, tetris_map):
-            logger.debug("Rotating counter-clockwise")
             self.state = temp_direction
             self.blocks = copy.deepcopy(temp_blocks)
             return True
@@ -93,7 +92,6 @@ class Shape(object):
 
     def move_left(self, tetris_map):
         if self.can_move_to_left(tetris_map):
-            logger.debug("Moving left")
             for i in self.blocks:
                 i[1] -= 1
         else:
@@ -101,7 +99,6 @@ class Shape(object):
 
     def move_right(self, tetris_map):
         if self.can_move_to_right(tetris_map):
-            logger.debug("Moving right")
             for block in self.blocks:
                 block[1] += 1
         else:
@@ -109,7 +106,6 @@ class Shape(object):
 
     def move_down(self, tetris_map):
         if not self.is_finished_or_collided(tetris_map):
-            logger.debug("Pushing down")
             for block in self.blocks:
                 block[0] += 1
         else:
