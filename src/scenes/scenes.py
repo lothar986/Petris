@@ -173,7 +173,7 @@ class TitleScene(SceneBase):
             events (List): List of event objects of the key pressed. Also detects mouseOver event.
                            This list can hold more than one item if the user presses the keys quickly
         """
-
+        logger.error("PROCESS_INPUT_TITLE")
         for event in events:
             
             # Press down action by the user.
@@ -231,7 +231,7 @@ class TitleScene(SceneBase):
         pass
 
     def render(self, screen):
-
+        logger.error("RENDER_TITLE")
         if not self.is_game_over:
             screen.fill(Colour.BLACK.value)
             self.draw_score_area(screen)
@@ -292,6 +292,9 @@ class GameScene(SceneBase):
         self.game_over = False
 
     def process_input(self, events):
+        
+        logger.error("PROCESS_INPUT_GAME")
+        
         keys = pygame.key.get_pressed()
         
         for event in events:
@@ -359,6 +362,9 @@ class GameScene(SceneBase):
                 self.moving_object[0].move_right(self.tetris_map)
 
     def update(self):
+        
+        logger.error("UPDATE")
+        
         self.movement_fps += 1
         if self.movement_fps >= self.movement_speed:
             self.movement_fps = 0
@@ -368,6 +374,9 @@ class GameScene(SceneBase):
         self.moving_object[1].draw_next(main_screen, GameMetaData.score_window_text_pos - 20)
 
     def render(self, main_screen):
+        
+        logger.error("RENDER_GAME")
+        
         main_screen.fill(Colour.BLACK.value)
 
         # Draw Scores
