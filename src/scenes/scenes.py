@@ -1,6 +1,5 @@
 import logging
-import sys
-from typing import List, Tuple
+from typing import List
 
 import pygame
 from pygame import mixer
@@ -73,7 +72,7 @@ class Scenes(object):
 
 
 class State(object):
-    """Game state. Keeps track of scores and levels."""
+    """Game state. Keeps track of scores and levels."""    
     level: int = 1
     score: int = 0
     full_line_no: int = 0
@@ -195,7 +194,7 @@ class TitleScene(SceneBase):
         self._is_continue = False
         self.options = 1
 
-    def process_input(self, events: List[Event]) -> None:
+    def process_input(self, events: List[Event]) -> bool:
         """
         Processes all keys that were pressed in main or pause menu.
 
@@ -203,7 +202,6 @@ class TitleScene(SceneBase):
             events (List): List of event objects of the key pressed. Also detects mouseOver event.
                            This list can hold more than one item if the user presses the keys quickly
         """
-
         for event in events:
             
             # Press down action by the user.
@@ -251,17 +249,18 @@ class TitleScene(SceneBase):
                     
                     # Quits the game when the user selects the "Exit" button
                     if self.options == 3:
-                        quit_game()
+                        return quit_game()
             
             # Quits the game when
             if event.type == pygame.QUIT:
-                quit_game()
+                return quit_game()
+                
+        return True
 
     def update(self):
         pass
 
     def render(self, screen: Surface):
-
         if not self.is_game_over:
             screen.fill(Colour.BLACK.value)
             self.draw_score_area(screen)
@@ -321,7 +320,7 @@ class GameScene(SceneBase):
         self.super_speed_mode = False
         self.game_over = False
 
-    def process_input(self, events: List[Event]):
+    def process_input(self, events: List[Event]) -> bool:
         """Process key presses in a running game
         
         Args:
@@ -334,7 +333,7 @@ class GameScene(SceneBase):
         for event in events:
             
             if event.type == pygame.QUIT:
-                quit_game()
+                return quit_game()
             
             # When the user performs an operation on the falling shape.
             if event.type == pygame.KEYDOWN:
@@ -360,6 +359,7 @@ class GameScene(SceneBase):
                 if event.key == pygame.K_DOWN and not self.super_speed_mode:
                     self.keyboard_speed = -2
                     self.moving_object[0].move_down(self.tetris_map)
+                    logger.info("Awarded %s Points for Single Push", 2)
                     State.score += 2
                 
                 # Rotates the orientation of the shape counter-clockwise
@@ -394,8 +394,19 @@ class GameScene(SceneBase):
             if self.keyboard_speed >= 4:
                 self.keyboard_speed = 0
                 self.moving_object[0].move_right(self.tetris_map)
+                
+        return True
 
     def update(self):
+        """
+        Counts the FPS ticker so that when it reachs movement_speed
+        it moves the shape down one unit then recounts.
+        """
+        
+        # NOTE: Uncomment to see the behavior
+        # logger.debug("Current Movement FPS: %s", self.movement_fps)
+        # logger.debug("Movement Speed: %s", self.movement_speed)
+        
         self.movement_fps += 1
         if self.movement_fps >= self.movement_speed:
             self.movement_fps = 0
@@ -405,6 +416,7 @@ class GameScene(SceneBase):
         self.moving_object[1].draw_next(main_screen, GameMetaData.score_window_text_pos - 20)
 
     def render(self, screen):
+        
         screen.fill(Colour.BLACK.value)
 
         # Draw Scores
@@ -438,8 +450,14 @@ class GameScene(SceneBase):
 
     def calculate_speed(self):
         if State.level < 10:
-            State.level = int(State.full_line_no / 10) + 1
-            new_movement_speed = 50 - ((State.level - 1) * 5)
+            new_level = int(State.full_line_no / 10) + 1
+            new_movement_speed = 50 - ((new_level - 1) * 5)
+                        
+            if State.level != new_level:            
+                logger.info("Advancing to New Level: %s", new_level)
+                logger.info("New Movement Speed: %s", new_movement_speed)
+            
+            State.level = new_level
             if not self.super_speed_mode and self.movement_speed != new_movement_speed:
                 self.movement_speed = new_movement_speed
         elif not self.super_speed_mode:
@@ -464,8 +482,11 @@ class GameScene(SceneBase):
                         full_line += 1
                     else:
                         temp.append(row)
-
+                
                 if full_line > 0:
+                    
+                    logger.info("Awarded %s Points for a Full Line", full_line * 100)
+                    
                     State.full_line_no += full_line
                     State.score += full_line * 100
                     for _ in range(full_line):
@@ -487,12 +508,12 @@ class GameScene(SceneBase):
             self.moving_object[0].move_down(self.tetris_map)
 
 
-def quit_game() -> None:
+def quit_game() -> bool:
     """Quits the game"""
     
     logger.info("Quitting Game...")
     
     pygame.quit()
     
-    # TODO: Dangerous to exit in here. Should exit from __main__.
-    sys.exit()
+    # Return false so that while loop stops.
+    return False

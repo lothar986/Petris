@@ -6,6 +6,7 @@ import sys
 import argparse
 import logging
 from pathlib import Path
+from typing import Optional
 
 # Third party libs
 import pygame
@@ -21,6 +22,8 @@ from src import paths
 from src.log.log import initialize_logger
 from src.scenes.scenes import GameMetaData, TitleScene, Scenes
 
+from src.petris_environment.petris_environment import PetrisEnvironment
+
 logger = logging.getLogger(__name__)
 
 PETRIS_LOG_FILE = "petris.log"
@@ -28,7 +31,7 @@ PETRIS_LOG_DIR = "logs"
 PETRIS_LOG_PATH = paths.BASE_DIR / PETRIS_LOG_DIR / PETRIS_LOG_FILE
 
 
-def main(speed: int) -> int:
+def main(speed: int, agent: Optional[str] = None) -> int:
     """
     Main function for the game
 
@@ -45,8 +48,7 @@ def main(speed: int) -> int:
         initialize_logger(log_path=PETRIS_LOG_PATH)
         
         logger.info("Starting Petris Game")
-        logger.info("Args: (speed=%s)", speed)
-        
+        logger.info("Args: (speed=%s, agent=%s)", speed, agent)
         # Positioned Window on the screen
         os.environ['SDL_VIDEO_WINDOW_POS'] = "%d,%d" % (100, 100)
 
@@ -69,11 +71,9 @@ def main(speed: int) -> int:
 
         logger.info("Spinning up GUI")
         
-        while True:
-            Scenes.active_scene.process_input(events=pygame.event.get())
+        while Scenes.active_scene.process_input(events=pygame.event.get()):
             Scenes.active_scene.update()
             Scenes.active_scene.render(screen=main_screen)
-
             clock.tick(speed)
     except Exception as ex:
         exit_code = 1
@@ -91,7 +91,9 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--speed", action="store", required=False, default=50, type=int,
                         help="The speed at which the tetris piece gets dropped. "
                         "Higher is faster. Default is 50.")
+    parser.add_argument("-a", "--agent", action="store", required=False, default=None, type=str,
+                        help="Agent flag.")
     
     args, _ = parser.parse_known_args()
     
-    sys.exit(main(speed=args.speed))
+    sys.exit(main(speed=args.speed, agent=args.agent))

@@ -20,6 +20,12 @@ Activate virtual environment:
 source venv/bin/activate
 ```
 
+Upgrade pip to 23.0.1 by running the command:
+
+```bash
+pip install --upgrade pip
+```
+
 To exit the virtual environment:
 
 ```bash
@@ -29,7 +35,7 @@ deactivate
 ## Install Dependencies
 
 ```bash
-pip3 install -r requirements.txt
+pip install -r requirements.txt
 ```
 
 # Startup
