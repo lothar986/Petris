@@ -2,6 +2,7 @@ import copy
 import random
 import logging
 from enum import Enum
+from typing import List
 
 import pygame
 
@@ -10,21 +11,39 @@ from src.colour.colour import Colour
 logger = logging.getLogger(__name__)
 
 
-def get_random_shape(map_row_no, map_column_no):
+def get_random_shape(map_row_no: int, map_column_no: int):
+    """
+    Gets a random shape for the player.
+
+    Args:
+        map_row_no (int): _description_
+        map_column_no (int): _description_
+
+    Returns:
+        _type_: _description_
+    """
+    
     shape_type = random.randrange(0, 7)
     if shape_type == 0:
+        logger.info("Creating SmashBoy Shape")
         return SmashBoy(map_row_no, map_column_no)
     if shape_type == 1:
+        logger.info("Creating Hero Shape")
         return Hero(map_row_no, map_column_no)
     if shape_type == 2:
+        logger.info("Creating BlueRicky Shape")
         return BlueRicky(map_row_no, map_column_no)
     if shape_type == 3:
+        logger.info("Creating OrangeRicky Shape")
         return OrangeRicky(map_row_no, map_column_no)
     if shape_type == 4:
+        logger.info("Creating TeeWee Shape")
         return TeeWee(map_row_no, map_column_no)
     if shape_type == 5:
+        logger.info("Creating RhodeIsland Shape")
         return RhodeIsland(map_row_no, map_column_no)
     if shape_type == 6:
+        logger.info("Creating Cleveland Shape")
         return Cleveland(map_row_no, map_column_no)
 
 
@@ -36,15 +55,29 @@ class Direction(Enum):
 
 
 class Shape(object):
-    def __init__(self, name, state, colour, row_no, column_no, head, blocks):
-        logger.info("INIT")
-        self.name = name
-        self.state = state
-        self.row_no = row_no
-        self.column_no = column_no
-        self.colour = colour
-        self.head = head
-        self.blocks = blocks
+    def __init__(self, 
+                 name: str, 
+                 state: Direction, 
+                 colour: Colour, 
+                 row_no: int, 
+                 column_no: int, 
+                 head: List[int], 
+                 blocks: List[int]):
+        logger.info(
+            "Shape(name=%s, state=%s, colour=%s, row_no=%s, column_no=%s, head=%s, blocks=%s)",
+            name, state, colour, row_no, column_no, head, blocks
+        )
+
+        self.shape_name: str = name
+        self.state: Direction = state
+        self.colour: Colour = colour
+        self.row_no: int = row_no
+        self.column_no: int = column_no
+        self.head: List[int] = head
+        
+        # TODO: Need to understand what this is.
+        self.blocks: List[int] = blocks
+        
         # Adding head to the blocks
         self.blocks.insert(0, self.head)
 
@@ -53,26 +86,66 @@ class Shape(object):
 
     # Methods for validating movement.
 
-    def can_rotate(self, blocks, tetris_map) -> bool:
+    def can_rotate(self, blocks: List[int], tetris_map: List[List[int]]) -> bool:
+        """
+        Checks if the current shape can rotate. Gets called when the 
+        player attempts to rotate the piece.
+
+        Args:
+            blocks (List[int]): _description_
+            tetris_map (List[List[int]]): _description_
+
+        Returns:
+            bool: Indicating if the shape can rotate.
+        """
+
         for block in blocks:
-            if block[0] < 0 or block[0] > self.row_no - 1 or \
-                    block[1] < 0 or block[1] > self.column_no - 1 or tetris_map[block[0]][block[1]] != 0:
+            if (block[0] < 0 
+                or block[0] > self.row_no - 1 
+                or block[1] < 0 
+                or block[1] > self.column_no - 1 
+                or tetris_map[block[0]][block[1]] != 0):
                 return False
         return True
 
-    def can_move_to_right(self, tetris_map) -> bool:
+    def can_move_to_right(self, tetris_map: List[List[int]]) -> bool:
+        """_summary_
+
+        Args:
+            tetris_map (List[List[int]]): _description_
+
+        Returns:
+            bool: _description_
+        """
         for block in self.blocks:
             if block[1] >= self.column_no - 1 or tetris_map[block[0]][block[1] + 1] != 0:
                 return False
         return True
 
-    def can_move_to_left(self, tetris_map) -> bool:
+    def can_move_to_left(self, tetris_map: List[List[int]]) -> bool:
+        """_summary_
+
+        Args:
+            tetris_map (List[List[int]]): _description_
+
+        Returns:
+            bool: _description_
+        """
         for block in self.blocks:
             if block[1] <= 0 or tetris_map[block[0]][block[1] - 1] != 0:
                 return False
         return True
 
-    def is_finished_or_collided(self, tetris_map) -> bool:
+    def is_finished_or_collided(self, tetris_map: List[List[int]]) -> bool:
+        """_summary_
+
+        Args:
+            tetris_map (List[List[int]]): _description_
+
+        Returns:
+            bool: _description_
+        """
+
         for block in self.blocks:
             if block[0] == self.row_no - 1 or tetris_map[block[0] + 1][block[1]] != 0:
                 return True
@@ -80,7 +153,15 @@ class Shape(object):
 
     # Movement Controllers
     
-    def rotate(self, tetris_map) -> bool:
+    def rotate(self, tetris_map: List[List[int]]) -> bool:
+        """_summary_
+
+        Args:
+            tetris_map (List[List[int]]): _description_
+
+        Returns:
+            bool: _description_
+        """
         temp_blocks, temp_direction = self.prepare_for_rotate(tetris_map)
 
         if self.can_rotate(temp_blocks, tetris_map):
@@ -91,21 +172,36 @@ class Shape(object):
             logger.debug("Cannot rotate")
             return False
 
-    def move_left(self, tetris_map):
+    def move_left(self, tetris_map: List[List[int]]):
+        """_summary_
+
+        Args:
+            tetris_map (List[List[int]]): _description_
+        """
         if self.can_move_to_left(tetris_map):
             for i in self.blocks:
                 i[1] -= 1
         else:
             logger.debug("Cannot move left")
 
-    def move_right(self, tetris_map):
+    def move_right(self, tetris_map: List[List[int]]):
+        """_summary_
+
+        Args:
+            tetris_map (List[List[int]]): _description_
+        """
         if self.can_move_to_right(tetris_map):
             for block in self.blocks:
                 block[1] += 1
         else:
             logger.debug("Cannot move right")
 
-    def move_down(self, tetris_map):
+    def move_down(self, tetris_map: List[List[int]]):
+        """_summary_
+
+        Args:
+            tetris_map (List[List[int]]): _description_
+        """
         if not self.is_finished_or_collided(tetris_map):
             for block in self.blocks:
                 block[0] += 1
@@ -114,11 +210,22 @@ class Shape(object):
 
     # TODO: Figure out what these do.
     def draw(self, screen):
+        """_summary_
+
+        Args:
+            screen (_type_): _description_
+        """
         for i in self.blocks:
             pygame.draw.rect(screen, self.colour.value, (50 + (i[1] * 30), 50 + (i[0] * 30), 30, 30), 2)
             pygame.draw.rect(screen, self.colour.value, (50 + (i[1] * 30) + 5, 50 + (i[0] * 30) + 5, 21, 21))
 
     def draw_next(self, screen, x_position):
+        """_summary_
+
+        Args:
+            screen (_type_): _description_
+            x_position (_type_): _description_
+        """
         for i in self.blocks:
             pygame.draw.rect(screen, self.colour.value, (x_position + (i[1] * 15), 170 + (i[0] * 15), 15, 15))
             pygame.draw.rect(screen, Colour.BLACK.value, (x_position + (i[1] * 15), 170 + (i[0] * 15), 15, 15), 1)
