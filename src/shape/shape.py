@@ -37,6 +37,7 @@ class Direction(Enum):
 
 class Shape(object):
     def __init__(self, name, state, colour, row_no, column_no, head, blocks):
+        logger.info("INIT")
         self.name = name
         self.state = state
         self.row_no = row_no

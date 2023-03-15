@@ -1,2 +1,4 @@
 pygame
 pynput
+numpy==1.23.1
+tf-agents[reverb]
