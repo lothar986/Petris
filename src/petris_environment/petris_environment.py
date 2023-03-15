@@ -1,4 +1,8 @@
-"""Main Petris python environmnent for the agent"""
+"""
+Main Petris python environmnent for the agent
+Courtesy of TensorFlow Docs:
+- https://www.tensorflow.org/agents/tutorials/2_environments_tutorial
+"""
 
 from __future__ import absolute_import
 from __future__ import division
