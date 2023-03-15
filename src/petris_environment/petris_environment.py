@@ -39,7 +39,9 @@ class PetrisEnvironment(PyEnvironment):
         # 2 -> Move right
         # 3 -> Rotate
         # 4 -> Shoot Down (SPACEBAR)
-        self._action_spec: BoundedArraySpec = BoundedArraySpec(shape=(), dtype=np.int32, minimum=0, maximum=4)
+        self._action_spec: BoundedArraySpec = BoundedArraySpec(
+            shape=(), dtype=np.int32, minimum=0, maximum=4, name="action"
+        )
 
         # TODO: Specify observation
         # ? 1. The shapes that are currently placed at the bottom of the tetris grid
