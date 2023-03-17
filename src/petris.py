@@ -31,7 +31,7 @@ PETRIS_LOG_DIR = "logs"
 PETRIS_LOG_PATH = paths.BASE_DIR / PETRIS_LOG_DIR / PETRIS_LOG_FILE
 
 
-def main(speed: int, agent: Optional[str] = None) -> int:
+def main(speed: int, agent: Optional[str] = None, debug: bool = False) -> int:
     """
     Main function for the game
 
@@ -45,7 +45,7 @@ def main(speed: int, agent: Optional[str] = None) -> int:
     exit_code = 0
     
     try:
-        initialize_logger(log_path=PETRIS_LOG_PATH)
+        initialize_logger(log_path=PETRIS_LOG_PATH, debug=debug)
         
         logger.info("Starting Petris Game")
         logger.info("Args: (speed=%s, agent=%s)", speed, agent)
@@ -93,7 +93,9 @@ if __name__ == "__main__":
                         "Higher is faster. Default is 50.")
     parser.add_argument("-a", "--agent", action="store", required=False, default=None, type=str,
                         help="Agent flag.")
+    parser.add_argument("-d", "--debug", action="store_true", required=False, default=False,
+                        help="Displays the debug logs.")
     
     args, _ = parser.parse_known_args()
     
-    sys.exit(main(speed=args.speed, agent=args.agent))
+    sys.exit(main(speed=args.speed, agent=args.agent, debug=args.debug))
