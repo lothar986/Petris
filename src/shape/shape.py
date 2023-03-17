@@ -10,43 +10,6 @@ from src.colour.colour import Colour
 
 logger = logging.getLogger(__name__)
 
-
-def get_random_shape(map_row_no: int, map_column_no: int):
-    """
-    Gets a random shape for the player.
-
-    Args:
-        map_row_no (int): _description_
-        map_column_no (int): _description_
-
-    Returns:
-        _type_: _description_
-    """
-    
-    shape_type = random.randrange(0, 7)
-    if shape_type == 0:
-        logger.info("Creating SmashBoy Shape")
-        return SmashBoy(map_row_no, map_column_no)
-    if shape_type == 1:
-        logger.info("Creating Hero Shape")
-        return Hero(map_row_no, map_column_no)
-    if shape_type == 2:
-        logger.info("Creating BlueRicky Shape")
-        return BlueRicky(map_row_no, map_column_no)
-    if shape_type == 3:
-        logger.info("Creating OrangeRicky Shape")
-        return OrangeRicky(map_row_no, map_column_no)
-    if shape_type == 4:
-        logger.info("Creating TeeWee Shape")
-        return TeeWee(map_row_no, map_column_no)
-    if shape_type == 5:
-        logger.info("Creating RhodeIsland Shape")
-        return RhodeIsland(map_row_no, map_column_no)
-    if shape_type == 6:
-        logger.info("Creating Cleveland Shape")
-        return Cleveland(map_row_no, map_column_no)
-
-
 class Direction(Enum):
     RIGHT = 1
     UP = 2
@@ -73,12 +36,15 @@ class Shape(object):
         self.colour: Colour = colour
         self.row_no: int = row_no
         self.column_no: int = column_no
+        
+        # Cooridinate of the head point of the 
         self.head: List[int] = head
         
-        # TODO: Need to understand what this is.
-        self.blocks: List[int] = blocks
+        # Holds tuples or arrays of size 2 that represents the 
+        # coordinates of all the blocks in the shape.
+        self.blocks: List[List[int]] = blocks
         
-        # Adding head to the blocks
+        # Adding head to the blocks - Makes this datastructure hold four cooridinates
         self.blocks.insert(0, self.head)
 
     def prepare_for_rotate(self, tetris_map):
@@ -166,7 +132,12 @@ class Shape(object):
 
         if self.can_rotate(temp_blocks, tetris_map):
             self.state = temp_direction
+            
+            logger.debug("Blocks Before: %s", self.blocks)
             self.blocks = copy.deepcopy(temp_blocks)
+            self.head = self.blocks[0]
+            logger.debug("Blocks After: %s", self.blocks)
+
             return True
         else:
             logger.debug("Cannot rotate")
@@ -433,3 +404,39 @@ class TeeWee(Shape):
             temp_blocks[3] = [temp_head[0], temp_head[1] + 1]
 
         return temp_blocks, temp_direction
+
+
+def get_random_shape(map_row_no: int, map_column_no: int) -> Shape:
+    """
+    Gets a random shape for the player.
+
+    Args:
+        map_row_no (int): _description_
+        map_column_no (int): _description_
+
+    Returns:
+        Shape: One of the child classes that inherits the Shape class.
+    """
+    
+    shape_type = random.randrange(0, 7)
+    if shape_type == 0:
+        logger.info("Creating SmashBoy Shape")
+        return SmashBoy(map_row_no, map_column_no)
+    if shape_type == 1:
+        logger.info("Creating Hero Shape")
+        return Hero(map_row_no, map_column_no)
+    if shape_type == 2:
+        logger.info("Creating BlueRicky Shape")
+        return BlueRicky(map_row_no, map_column_no)
+    if shape_type == 3:
+        logger.info("Creating OrangeRicky Shape")
+        return OrangeRicky(map_row_no, map_column_no)
+    if shape_type == 4:
+        logger.info("Creating TeeWee Shape")
+        return TeeWee(map_row_no, map_column_no)
+    if shape_type == 5:
+        logger.info("Creating RhodeIsland Shape")
+        return RhodeIsland(map_row_no, map_column_no)
+    if shape_type == 6:
+        logger.info("Creating Cleveland Shape")
+        return Cleveland(map_row_no, map_column_no)
