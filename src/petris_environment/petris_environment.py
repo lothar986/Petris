@@ -9,6 +9,7 @@ from __future__ import division
 from __future__ import print_function
 
 import logging
+from typing import List
 
 import numpy as np
 import tensorflow as tf
@@ -33,25 +34,18 @@ class PetrisEnvironment(PyEnvironment):
     """Custom python environment for TF Agents. Extends PyEnvironment"""
     def __init__(self):
         
-        # Specify actions
-        # 0 -> Move Down
-        # 1 -> Move Left
-        # 2 -> Move right
-        # 3 -> Rotate
-        # 4 -> Shoot Down (SPACEBAR)
+        # Specify action range: [ 0: Down, 1: Left, 2: Right, 3: Rotate, 4: Spacebar ]
         self._action_spec: BoundedArraySpec = BoundedArraySpec(
             shape=(), dtype=np.int32, minimum=0, maximum=4, name="action"
         )
 
-        # TODO: Specify observation
-        # ? 1. The shapes that are currently placed at the bottom of the tetris grid
-        # ? 2. Current shape the agent has
-        # ? 3. The next shape the agent is going to receive
-        # ? 4. Current movement speed
-        # ? 5. Current position of the shape
+        # Specify observation
+        self._observation_spec: BoundedArraySpec = BoundedArraySpec(
+            shape=(20, 10), dtype=np.int32, minimum=0
+        )
         
-        # TODO: Figure out how to use this state.
-        self._state: int = 0
+        # State will represent the current state of the tetris map
+        self._state: List[List[int]] = [[0]*10]*20
         
         # Flag for a game ends. Normally happens when the agent loses.
         self._episode_ended: bool = False
@@ -60,6 +54,10 @@ class PetrisEnvironment(PyEnvironment):
     def action_spec(self) -> BoundedArraySpec:
         return self._action_spec
 
+    @property
+    def observation_spec(self) -> BoundedArraySpec:
+        return self._observation_spec
+    
     def _reset(self) -> TimeStep:
         """
         Resets the environment state for a new game
@@ -67,16 +65,16 @@ class PetrisEnvironment(PyEnvironment):
         Returns:
             TimeStep: ????
         """
-        self._state = 0
+        self._state = [[0]*10]*20
         self._episode_ended = False
         
-        # TODO: Why are we return this TimeStep.
         return ts.restart(np.array([self._state], dtype=np.int32))
 
     def _step(self, action):
-        """_summary_
+        """
+        Perform the given action and return the new situated that was a result of that action.
 
         Args:
-            action (_type_): _description_
+            action (_type_): Action to perform
         """
         pass
