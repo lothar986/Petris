@@ -539,7 +539,5 @@ def quit_game() -> bool:
     
     logger.info("Quitting Game...")
     
-    pygame.quit()
-    
     # Return false so that while loop stops.
     return False
