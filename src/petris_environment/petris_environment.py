@@ -8,8 +8,9 @@ from __future__ import absolute_import
 from __future__ import division
 from __future__ import print_function
 
+import time
 import logging
-from typing import List
+from typing import List, Optional
 
 import numpy as np
 import tensorflow as tf
@@ -31,8 +32,12 @@ logger = logging.getLogger(__name__)
 
 
 class PetrisEnvironment(PyEnvironment):
+    
     """Custom python environment for TF Agents. Extends PyEnvironment"""
-    def __init__(self):
+    def __init__(self, agent_name: str):
+
+        self._agent_name: str = agent_name
+        self._num_steps: int = 0
         
         # Specify action range: [ 0: Down, 1: Left, 2: Right, 3: Rotate, 4: Spacebar ]
         self._action_spec: BoundedArraySpec = BoundedArraySpec(
@@ -51,10 +56,12 @@ class PetrisEnvironment(PyEnvironment):
         self._episode_ended: bool = False
     
     @property
+    def agent_name(self) -> str:
+        return self._agent_name
+    
     def action_spec(self) -> BoundedArraySpec:
         return self._action_spec
 
-    @property
     def observation_spec(self) -> BoundedArraySpec:
         return self._observation_spec
     
@@ -65,10 +72,12 @@ class PetrisEnvironment(PyEnvironment):
         Returns:
             TimeStep: ????
         """
+        
         self._state = [[0]*10]*20
         self._episode_ended = False
+        self._num_steps = 0
         
-        return ts.restart(np.array([self._state], dtype=np.int32))
+        return ts.restart(np.array(self._state, dtype=np.int32))
 
     def _step(self, action):
         """
@@ -77,4 +86,12 @@ class PetrisEnvironment(PyEnvironment):
         Args:
             action (_type_): Action to perform
         """
-        pass
+        
+        logger.info("Step #%s", self._num_steps)
+        
+        if self._episode_ended:
+            self.reset()
+
+        time.sleep(1)
+        self._num_steps += 1
+        return ts.transition(np.array(self._state, dtype=np.int32), reward=0.05, discount=1.0)
