@@ -7,7 +7,7 @@ from pygame.event import Event
 from pygame.surface import Surface
 
 from src import paths
-from src.shape.shape import get_random_shape
+from src.shape.shape import get_random_shape, Shape
 from src.colour.colour import Colour, get_colour_by_number, get_colour_number_by_name
 
 logger = logging.getLogger(__name__)
@@ -53,8 +53,11 @@ class GameMetaData(object):
     """
 
     font_type = TETRIS_FONTS_TFF_PATH
+    
+    # Game map or grid dimensions: (20x10)
     map_row_no = 20
     map_column_no = 10
+    
     screen_width = map_column_no * 30 + 250
     screen_height = map_row_no * 30 + 100
     screen_center_width = int(screen_width / 2)
@@ -307,12 +310,24 @@ class GameScene(SceneBase):
     """Main tetris game scene. When the player is playing."""
     def __init__(self):
         SceneBase.__init__(self)
+        
+        # This is the column array
         self.empty_line = []
         for i in range(GameMetaData.map_column_no):
             self.empty_line.append(0)
+            
+        # Insert the column array of zeros into each row to complete the entire map
         self.tetris_map = [self.empty_line[:] for _ in range(GameMetaData.map_row_no)]
-        self.moving_object = [get_random_shape(GameMetaData.map_row_no, GameMetaData.map_column_no),
-                              get_random_shape(GameMetaData.map_row_no, GameMetaData.map_column_no)]
+
+        logger.info("Tetris Map Shape: (%s, %s)", GameMetaData.map_row_no, GameMetaData.map_column_no)
+
+        # Get two shapes. First one being the controlling shape and the second one being the next.
+        self.moving_object: List[Shape] = [
+            get_random_shape(GameMetaData.map_row_no, GameMetaData.map_column_no),
+            get_random_shape(GameMetaData.map_row_no, GameMetaData.map_column_no)
+        ]
+        
+        # Set the rest of the game configurations.
         self.movement_fps = 0
         self.keyboard_speed = 0
         self.movement_speed = 50
@@ -403,10 +418,6 @@ class GameScene(SceneBase):
         it moves the shape down one unit then recounts.
         """
         
-        # NOTE: Uncomment to see the behavior
-        # logger.debug("Current Movement FPS: %s", self.movement_fps)
-        # logger.debug("Movement Speed: %s", self.movement_speed)
-        
         self.movement_fps += 1
         if self.movement_fps >= self.movement_speed:
             self.movement_fps = 0
@@ -464,14 +475,23 @@ class GameScene(SceneBase):
             self.movement_speed = self.maximum_movement_speed
 
     def move_object_down_or_game_over(self):
+        
         if self.moving_object[0].is_finished_or_collided(self.tetris_map):
             self.movement_speed = 0
             is_game_over = False
+            
+            # Updating the tetris map by marking the occupied areas.
             for block in self.moving_object[0].blocks:
-                if block[0] == 0:
+                row_idx = block[0]
+                col_idx = block[1]
+                
+                # If the shape is at the very top then there is no room game over.
+                if row_idx == 0:
                     is_game_over = True
-                self.tetris_map[block[0]][block[1]] = get_colour_number_by_name(self.moving_object[0].colour.name)
 
+                # Mark this location as 'occupied'
+                self.tetris_map[row_idx][col_idx] = get_colour_number_by_name(self.moving_object[0].colour.name)
+            
             if not is_game_over:
                 temp = []
                 
@@ -493,6 +513,7 @@ class GameScene(SceneBase):
                         temp.append(self.empty_line[:])
 
                 self.tetris_map = list(reversed(temp))
+                
                 self.moving_object.append(get_random_shape(GameMetaData.map_row_no, GameMetaData.map_column_no))
                 self.moving_object.pop(0)
 
@@ -502,18 +523,27 @@ class GameScene(SceneBase):
             self.calculate_speed()
 
             self.game_over = is_game_over
+            
+            logger.debug("Tetris Map:")
+            for row in self.tetris_map:
+                logger.debug("%s", row)
+            
+            # TODO: Reference the tetris_map to update the state.
         else:
+            logger.debug("Moving Object Down")
+            
             if self.super_speed_mode:
                 State.score += 2
             self.moving_object[0].move_down(self.tetris_map)
+            
+            logger.debug("Head Position: %s", self.moving_object[0].head)
+            logger.debug("Blocks: %s", self.moving_object[0].blocks)
 
 
 def quit_game() -> bool:
     """Quits the game"""
     
     logger.info("Quitting Game...")
-    
-    pygame.quit()
     
     # Return false so that while loop stops.
     return False

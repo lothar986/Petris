@@ -52,5 +52,6 @@ colours_by_name = {
 }
 
 
-def get_colour_number_by_name(colour_str):
+def get_colour_number_by_name(colour_str: str) -> int:
+    """Gets the color value of the given colour name"""
     return colours_by_name.get(colour_str)
