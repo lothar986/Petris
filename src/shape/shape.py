@@ -26,7 +26,7 @@ class Shape(object):
                  column_no: int, 
                  head: List[int], 
                  blocks: List[int]):
-        logger.info(
+        logger.debug(
             "Shape(name=%s, state=%s, colour=%s, row_no=%s, column_no=%s, head=%s, blocks=%s)",
             name, state, colour, row_no, column_no, head, blocks
         )
@@ -420,23 +420,23 @@ def get_random_shape(map_row_no: int, map_column_no: int) -> Shape:
     
     shape_type = random.randrange(0, 7)
     if shape_type == 0:
-        logger.info("Creating SmashBoy Shape")
+        logger.debug("Creating SmashBoy Shape")
         return SmashBoy(map_row_no, map_column_no)
     if shape_type == 1:
-        logger.info("Creating Hero Shape")
+        logger.debug("Creating Hero Shape")
         return Hero(map_row_no, map_column_no)
     if shape_type == 2:
-        logger.info("Creating BlueRicky Shape")
+        logger.debug("Creating BlueRicky Shape")
         return BlueRicky(map_row_no, map_column_no)
     if shape_type == 3:
-        logger.info("Creating OrangeRicky Shape")
+        logger.debug("Creating OrangeRicky Shape")
         return OrangeRicky(map_row_no, map_column_no)
     if shape_type == 4:
-        logger.info("Creating TeeWee Shape")
+        logger.debug("Creating TeeWee Shape")
         return TeeWee(map_row_no, map_column_no)
     if shape_type == 5:
-        logger.info("Creating RhodeIsland Shape")
+        logger.debug("Creating RhodeIsland Shape")
         return RhodeIsland(map_row_no, map_column_no)
     if shape_type == 6:
-        logger.info("Creating Cleveland Shape")
+        logger.debug("Creating Cleveland Shape")
         return Cleveland(map_row_no, map_column_no)

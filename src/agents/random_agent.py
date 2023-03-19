@@ -1,6 +1,7 @@
 """Script containing the random petris agent."""
 
 import logging
+import time
 from typing import List
 
 import pygame
@@ -39,16 +40,17 @@ def play_random_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, sp
         game_scene = GameScene()
         Scenes.active_scene = game_scene
         
-        env.reset()
+        time_step = env.reset()
         
         events: List[Event] = []
-        while Scenes.active_scene.process_input(events=events):
-            events = pygame.event.get()
+        while not time_step.is_last():
 
             # [1] == (1, )
             random_action = tf.random.uniform([1], 0, 5, dtype=tf.int32)
-            
             env.step(action=random_action)
+               
+            events = pygame.event.get() 
+            Scenes.active_scene.process_input(events=events)
             
             # Press escape to stop the entire game.            
             for event in events:
