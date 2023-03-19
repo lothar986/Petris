@@ -14,6 +14,7 @@ from typing import List, Optional
 
 import numpy as np
 import tensorflow as tf
+from tensorflow import Tensor
 
 from tf_agents.environments import py_environment
 from tf_agents.environments.py_environment import PyEnvironment
@@ -27,6 +28,10 @@ from tf_agents.environments import wrappers
 from tf_agents.environments import suite_gym
 from tf_agents.trajectories import time_step as ts
 from tf_agents.trajectories.time_step import TimeStep
+
+
+from src.keyboard_controller.keyboard_controller import (move_down, move_left, move_right, 
+                                                         move_to_bottom, rotate, Action)
 
 logger = logging.getLogger(__name__)
 
@@ -65,6 +70,27 @@ class PetrisEnvironment(PyEnvironment):
     def observation_spec(self) -> BoundedArraySpec:
         return self._observation_spec
     
+    def perform_action(self, action: Tensor) -> bool:
+        """_summary_
+
+        Args:
+            action (Tensor): _description_
+
+        Returns:
+            bool: _description_
+        """
+
+        if action == Action.MOVE_DOWN:
+            move_down()
+        elif action == Action.MOVE_RIGHT:
+            move_right()
+        elif action == Action.MOVE_LEFT:
+            move_left()
+        elif action == Action.ROTATE:
+            rotate()
+        elif action == Action.MOVE_TO_BOTTOM:
+            move_to_bottom()
+    
     def _reset(self) -> TimeStep:
         """
         Resets the environment state for a new game
@@ -79,7 +105,7 @@ class PetrisEnvironment(PyEnvironment):
         
         return ts.restart(np.array(self._state, dtype=np.int32))
 
-    def _step(self, action):
+    def _step(self, action: Tensor):
         """
         Perform the given action and return the new situated that was a result of that action.
 
@@ -87,11 +113,11 @@ class PetrisEnvironment(PyEnvironment):
             action (_type_): Action to perform
         """
         
-        logger.info("Step #%s", self._num_steps)
+        logger.debug("Step #%s", self._num_steps)
+        logger.debug("Action: %s", action)
         
         if self._episode_ended:
             self.reset()
 
-        time.sleep(1)
         self._num_steps += 1
         return ts.transition(np.array(self._state, dtype=np.int32), reward=0.05, discount=1.0)

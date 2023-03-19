@@ -489,9 +489,8 @@ class GameScene(SceneBase):
                 if row_idx == 0:
                     is_game_over = True
 
+                # Mark this location as 'occupied'
                 self.tetris_map[row_idx][col_idx] = get_colour_number_by_name(self.moving_object[0].colour.name)
-
-            logger.debug(self.tetris_map)
             
             if not is_game_over:
                 temp = []
@@ -514,6 +513,7 @@ class GameScene(SceneBase):
                         temp.append(self.empty_line[:])
 
                 self.tetris_map = list(reversed(temp))
+                
                 self.moving_object.append(get_random_shape(GameMetaData.map_row_no, GameMetaData.map_column_no))
                 self.moving_object.pop(0)
 
@@ -523,6 +523,12 @@ class GameScene(SceneBase):
             self.calculate_speed()
 
             self.game_over = is_game_over
+            
+            logger.debug("Tetris Map:")
+            for row in self.tetris_map:
+                logger.debug("%s", row)
+            
+            # TODO: Reference the tetris_map to update the state.
         else:
             logger.debug("Moving Object Down")
             
