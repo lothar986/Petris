@@ -374,7 +374,7 @@ class GameScene(SceneBase):
                 if event.key == pygame.K_DOWN and not self.super_speed_mode:
                     self.keyboard_speed = -2
                     self.moving_object[0].move_down(self.tetris_map)
-                    logger.info("Awarded %s Points for Single Push", 2)
+                    logger.debug("Awarded %s Points for Single Push", 2)
                     State.score += 2
                 
                 # Rotates the orientation of the shape counter-clockwise
@@ -505,7 +505,7 @@ class GameScene(SceneBase):
                 
                 if full_line > 0:
                     
-                    logger.info("Awarded %s Points for a Full Line", full_line * 100)
+                    logger.debug("Awarded %s Points for a Full Line", full_line * 100)
                     
                     State.full_line_no += full_line
                     State.score += full_line * 100
