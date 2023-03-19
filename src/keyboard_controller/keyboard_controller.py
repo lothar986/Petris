@@ -18,19 +18,24 @@ class Action(IntEnum):
 
 def move_left() -> None:
     _CONTROLLER.press(Key.left)
+    _CONTROLLER.release(Key.left)
 
 
 def move_right() -> None:
     _CONTROLLER.press(Key.right)
+    _CONTROLLER.release(Key.right)
     
     
 def move_down() -> None:
     _CONTROLLER.press(Key.down)
+    _CONTROLLER.release(Key.down)
     
     
 def rotate() -> None:
     _CONTROLLER.press(Key.up)
+    _CONTROLLER.release(Key.up)
     
     
 def move_to_bottom() -> None:
     _CONTROLLER.press(Key.space)
+    _CONTROLLER.release(Key.space)

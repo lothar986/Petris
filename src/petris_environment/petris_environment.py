@@ -118,6 +118,8 @@ class PetrisEnvironment(PyEnvironment):
         
         if self._episode_ended:
             self.reset()
+            
+        self.perform_action(action=action)
 
         self._num_steps += 1
         return ts.transition(np.array(self._state, dtype=np.int32), reward=0.05, discount=1.0)
