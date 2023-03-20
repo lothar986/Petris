@@ -44,7 +44,6 @@ class PetrisEnvironment(PyEnvironment):
 
         self._agent_name: str = agent_name
         self._game_scene: GameScene = GameScene()
-        self._num_steps: int = 0
         
         # Specify action range: [ 0: Down, 1: Left, 2: Right, 3: Rotate, 4: Spacebar ]
         self._action_spec: BoundedArraySpec = BoundedArraySpec(
@@ -76,7 +75,7 @@ class PetrisEnvironment(PyEnvironment):
     def observation_spec(self) -> BoundedArraySpec:
         return self._observation_spec
     
-    def perform_action(self, action: Tensor) -> bool:
+    def perform_action(self, action: Tensor) -> None:
         """_summary_
 
         Args:
@@ -110,7 +109,6 @@ class PetrisEnvironment(PyEnvironment):
         self._game_scene = GameScene()
         self._state = self._game_scene.tetris_map
         self._episode_ended = False
-        self._num_steps = 0
         
         return ts.restart(np.array(self._state, dtype=np.int32))
 
@@ -132,5 +130,4 @@ class PetrisEnvironment(PyEnvironment):
             return ts.termination(np.array([self._state], dtype=np.int32), 1)
         else:
             self.perform_action(action=action)
-            self._num_steps += 1
             return ts.transition(np.array(self._state, dtype=np.int32), reward=0.05, discount=1.0)
