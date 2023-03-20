@@ -64,4 +64,3 @@ def play_random_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, sp
             if isinstance(Scenes.active_scene, TitleScene):
                 logger.info("End of Episode %s", episode)
                 break
-        
