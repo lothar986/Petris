@@ -34,7 +34,7 @@ PETRIS_LOG_DIR = "logs"
 PETRIS_LOG_PATH = paths.BASE_DIR / PETRIS_LOG_DIR / PETRIS_LOG_FILE
 
 
-def main(speed: int, agent: Optional[str] = None, debug: bool = False) -> int:
+def main(speed: int, agent: Optional[str] = None, debug: bool = False, num_episodes: int = 5) -> int:
     """
     Main function for the game
 
@@ -76,7 +76,11 @@ def main(speed: int, agent: Optional[str] = None, debug: bool = False) -> int:
         logger.info("Spinning up GUI")
         
         if agent == "random":
-            play_random_agent(env=PetrisEnvironment(agent_name=agent.upper()), main_screen=main_screen, clock=clock, speed=speed)
+            play_random_agent(env=PetrisEnvironment(agent_name=agent.upper()), 
+                              main_screen=main_screen, 
+                              clock=clock, 
+                              speed=speed, 
+                              num_episodes=num_episodes)
         elif agent == "dqn":
             play_dqn_agent(env=PetrisEnvironment(agent_name=agent.upper()), main_screen=main_screen, clock=clock, speed=speed)
         else:
@@ -103,7 +107,12 @@ if __name__ == "__main__":
                         help="Agent flag.")
     parser.add_argument("-d", "--debug", action="store_true", required=False, default=False,
                         help="Displays the debug logs.")
+    parser.add_argument("-e", "--num-episodes", action="store", required=False, default=5, type=int,
+                        help="Number of episodes for the agent to run.")
     
     args, _ = parser.parse_known_args()
     
-    sys.exit(main(speed=args.speed, agent=args.agent, debug=args.debug))
+    sys.exit(main(speed=args.speed, 
+                  agent=args.agent, 
+                  debug=args.debug, 
+                  num_episodes=args.num_episodes))
