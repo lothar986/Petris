@@ -30,6 +30,7 @@ from tf_agents.trajectories import time_step as ts
 from tf_agents.trajectories.time_step import TimeStep
 
 
+from src.scenes.scenes import GameScene
 from src.keyboard_controller.keyboard_controller import (move_down, move_left, move_right, 
                                                          move_to_bottom, rotate, Action)
 
@@ -42,6 +43,7 @@ class PetrisEnvironment(PyEnvironment):
     def __init__(self, agent_name: str):
 
         self._agent_name: str = agent_name
+        self._game_scene: GameScene = GameScene()
         self._num_steps: int = 0
         
         # Specify action range: [ 0: Down, 1: Left, 2: Right, 3: Rotate, 4: Spacebar ]
@@ -55,7 +57,7 @@ class PetrisEnvironment(PyEnvironment):
         )
         
         # State will represent the current state of the tetris map
-        self._state: List[List[int]] = [[0]*10]*20
+        self._state: List[List[int]] = self._game_scene.tetris_map
         
         # Flag for a game ends. Normally happens when the agent loses.
         self._episode_ended: bool = False
@@ -64,6 +66,10 @@ class PetrisEnvironment(PyEnvironment):
     def agent_name(self) -> str:
         return self._agent_name
     
+    @property
+    def game_scene(self) -> GameScene:
+        return self._game_scene
+        
     def action_spec(self) -> BoundedArraySpec:
         return self._action_spec
 
@@ -99,7 +105,10 @@ class PetrisEnvironment(PyEnvironment):
             TimeStep: ????
         """
         
-        self._state = [[0]*10]*20
+        logger.info("Initializing Environment")
+        
+        self._game_scene = GameScene()
+        self._state = self._game_scene.tetris_map
         self._episode_ended = False
         self._num_steps = 0
         
@@ -113,13 +122,15 @@ class PetrisEnvironment(PyEnvironment):
             action (_type_): Action to perform
         """
         
-        logger.debug("Step #%s", self._num_steps)
-        logger.debug("Action: %s", action)
+        if self._episode_ended:
+            return self.reset()
+        
+        self._episode_ended = self._game_scene.game_over
         
         if self._episode_ended:
-            self.reset()
-            
-        self.perform_action(action=action)
-
-        self._num_steps += 1
-        return ts.transition(np.array(self._state, dtype=np.int32), reward=0.05, discount=1.0)
+            logger.info("Episode Ended")
+            return ts.termination(np.array([self._state], dtype=np.int32), 1)
+        else:
+            self.perform_action(action=action)
+            self._num_steps += 1
+            return ts.transition(np.array(self._state, dtype=np.int32), reward=0.05, discount=1.0)

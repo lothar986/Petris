@@ -29,7 +29,7 @@ def play_random_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, sp
         clock (Clock): _description_
         speed (int): _description_
     """
-    
+
     # Runs multiple games without quiting the pygame
     for episode in range(1, num_episodes + 1):
         logger.info("Starting Episode %s", episode)
@@ -37,18 +37,13 @@ def play_random_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, sp
         # Display episode
         pygame.display.set_caption(f"{env.agent_name} Agent - Episode {episode}")
         
-        game_scene = GameScene()
-        Scenes.active_scene = game_scene
-        
         time_step = env.reset()
+        
+        # Initialize new game
+        Scenes.active_scene = env.game_scene
         
         events: List[Event] = []
         while not time_step.is_last():
-
-            # [1] == (1, )
-            random_action = tf.random.uniform([1], 0, 5, dtype=tf.int32)
-            env.step(action=random_action)
-               
             events = pygame.event.get() 
             Scenes.active_scene.process_input(events=events)
             
@@ -60,8 +55,13 @@ def play_random_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, sp
             
             render_active_scene(main_screen=main_screen, clock=clock, speed=speed)
             
+            # [1] == (1, )
+            random_action = tf.random.uniform([1], 0, 5, dtype=tf.int32)
+            time_step = env.step(action=random_action)
+            
             # If it switches to the title scene that means the game episode is over.
             # Recreate GameScene and run the next episode.
             if isinstance(Scenes.active_scene, TitleScene):
                 logger.info("End of Episode %s", episode)
                 break
+        
