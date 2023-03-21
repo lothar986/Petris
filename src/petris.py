@@ -75,13 +75,13 @@ def main(speed: int, agent: Optional[str] = None, debug: bool = False, num_episo
 
         logger.info("Spinning up GUI")
         
-        if agent == "random":
+        if agent.lower() == "random":
             play_random_agent(env=PetrisEnvironment(agent_name=agent.upper()), 
                               main_screen=main_screen, 
                               clock=clock, 
                               speed=speed, 
                               num_episodes=num_episodes)
-        elif agent == "dqn":
+        elif agent.lower() == "dqn":
             play_dqn_agent(env=PetrisEnvironment(agent_name=agent.upper()), main_screen=main_screen, clock=clock, speed=speed)
         else:
             play_game(main_screen=main_screen, clock=clock, speed=speed)
