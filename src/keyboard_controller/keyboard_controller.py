@@ -39,3 +39,7 @@ def rotate() -> None:
 def move_to_bottom() -> None:
     _CONTROLLER.press(Key.space)
     _CONTROLLER.release(Key.space)
+
+def quit() -> None:
+    _CONTROLLER.press(Key.esc)
+    _CONTROLLER.release(Key.esc)
