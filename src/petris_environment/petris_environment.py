@@ -30,7 +30,7 @@ from tf_agents.trajectories import time_step as ts
 from tf_agents.trajectories.time_step import TimeStep
 
 
-from src.scenes.scenes import GameScene
+from src.scenes.scenes import GameScene, State
 from src.keyboard_controller.keyboard_controller import (move_down, move_left, move_right, 
                                                          move_to_bottom, rotate, Action)
 
@@ -104,8 +104,9 @@ class PetrisEnvironment(PyEnvironment):
             TimeStep: ????
         """
         
-        logger.info("Initializing Environment")
+        logger.info("Restarting Environment")
         
+        State.reset_new_game()
         self._game_scene = GameScene()
         self._state = self._game_scene.tetris_map
         self._episode_ended = False
@@ -120,14 +121,18 @@ class PetrisEnvironment(PyEnvironment):
             action (_type_): Action to perform
         """
         
+        # TODO: Add line limit to end the game.
+        
         if self._episode_ended:
             return self.reset()
         
+        # Check if the game is already over
         self._episode_ended = self._game_scene.game_over
         
         if self._episode_ended:
             logger.info("Episode Ended")
-            return ts.termination(np.array([self._state], dtype=np.int32), 1)
+            return ts.termination(np.array(self._state, dtype=np.int32), 1)
         else:
             self.perform_action(action=action)
-            return ts.transition(np.array(self._state, dtype=np.int32), reward=0.05, discount=1.0)
+            reward = State.full_line_no * 100
+            return ts.transition(np.array(self._state, dtype=np.int32), reward=reward, discount=1.0)
