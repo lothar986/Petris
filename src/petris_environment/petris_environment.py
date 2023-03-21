@@ -31,8 +31,8 @@ from tf_agents.trajectories.time_step import TimeStep
 
 
 from src.scenes.scenes import GameScene, State
-from src.keyboard_controller.keyboard_controller import (move_down, move_left, move_right, 
-                                                         move_to_bottom, rotate, Action)
+from src.keyboard_controller.keyboard_controller import (move_down, move_left, 
+                                                         move_right, rotate, Action)
 
 logger = logging.getLogger(__name__)
 
@@ -47,7 +47,7 @@ class PetrisEnvironment(PyEnvironment):
         
         # Specify action range: [ 0: Down, 1: Left, 2: Right, 3: Rotate, 4: Spacebar ]
         self._action_spec: BoundedArraySpec = BoundedArraySpec(
-            shape=(), dtype=np.int32, minimum=0, maximum=4, name="action"
+            shape=(), dtype=np.int32, minimum=0, maximum=3, name="action"
         )
 
         # Specify observation
@@ -93,8 +93,6 @@ class PetrisEnvironment(PyEnvironment):
             move_left()
         elif action == Action.ROTATE:
             rotate()
-        elif action == Action.MOVE_TO_BOTTOM:
-            move_to_bottom()
     
     def _reset(self) -> TimeStep:
         """

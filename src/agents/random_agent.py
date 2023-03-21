@@ -56,7 +56,7 @@ def play_random_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, sp
             render_active_scene(main_screen=main_screen, clock=clock, speed=speed)
             
             # [1] == (1, )
-            random_action = tf.random.uniform([1], 0, 5, dtype=tf.int32)
+            random_action = tf.random.uniform([1], 0, 4, dtype=tf.int32)
             time_step = env.step(action=random_action)
             
             # If it switches to the title scene that means the game episode is over.
