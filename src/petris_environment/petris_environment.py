@@ -129,7 +129,7 @@ class PetrisEnvironment(PyEnvironment):
         
         if self._episode_ended:
             logger.info("Episode Ended")
-            return ts.termination(np.array(self._state, dtype=np.int32), 1)
+            return ts.termination(np.array(self._state, dtype=np.int32), reward=0)
         else:
             self.perform_action(action=action)
             reward = State.full_line_no * 100
