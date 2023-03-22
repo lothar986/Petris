@@ -25,7 +25,8 @@ from src.scenes.scenes import GameMetaData, TitleScene, Scenes
 from src.petris_environment.petris_environment import PetrisEnvironment
 from src.game_runner.game_runner import play_game
 from src.agents.random_agent import play_random_agent
-from src.agents.dqn_agent import play_dqn_agent
+from src.agents.dqn import play_dqn_agent
+from tf_agents.environments import tf_py_environment
 
 logger = logging.getLogger(__name__)
 
@@ -76,13 +77,13 @@ def main(speed: int, agent: Optional[str] = None, debug: bool = False, num_episo
         logger.info("Spinning up GUI")
         
         if agent and agent.lower() == "random":
-            play_random_agent(env=PetrisEnvironment(agent_name=agent.upper()), 
+            play_random_agent(env=PetrisEnvironment(), 
                               main_screen=main_screen, 
                               clock=clock, 
                               speed=speed, 
                               num_episodes=num_episodes)
         elif agent and agent.lower() == "dqn":
-            play_dqn_agent(env=PetrisEnvironment(agent_name=agent.upper()), main_screen=main_screen, clock=clock, speed=speed)
+            play_dqn_agent(env=tf_py_environment.TFPyEnvironment(PetrisEnvironment()), main_screen=main_screen, clock=clock, speed=speed)
         else:
             play_game(main_screen=main_screen, clock=clock, speed=speed)
         

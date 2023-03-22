@@ -19,7 +19,6 @@ from tensorflow import Tensor
 from tf_agents.environments import py_environment
 from tf_agents.environments.py_environment import PyEnvironment
 from tf_agents.environments import tf_environment
-from tf_agents.environments import tf_py_environment
 from tf_agents.environments import utils
 
 from tf_agents.specs import array_spec
@@ -40,9 +39,7 @@ logger = logging.getLogger(__name__)
 class PetrisEnvironment(PyEnvironment):
     
     """Custom python environment for TF Agents. Extends PyEnvironment"""
-    def __init__(self, agent_name: str):
-
-        self._agent_name: str = agent_name
+    def __init__(self):
         self._game_scene: GameScene = GameScene()
         
         # Specify action range: [ 0: Down, 1: Left, 2: Right, 3: Rotate, 4: Spacebar ]
@@ -52,18 +49,16 @@ class PetrisEnvironment(PyEnvironment):
 
         # Specify observation
         self._observation_spec: BoundedArraySpec = BoundedArraySpec(
-            shape=(20, 10), dtype=np.int32, minimum=0
+            shape=(1, 200), dtype=np.int32, minimum=0
         )
         
         # State will represent the current state of the tetris map
-        self._state: List[List[int]] = self._game_scene.tetris_map
+        squeezed_state = np.squeeze(np.array(self._game_scene.tetris_map).flatten().tolist())
+        logger.error(squeezed_state.shape)
+        self._state: List[int] = squeezed_state
         
         # Flag for a game ends. Normally happens when the agent loses.
         self._episode_ended: bool = False
-    
-    @property
-    def agent_name(self) -> str:
-        return self._agent_name
     
     @property
     def game_scene(self) -> GameScene:
@@ -106,7 +101,7 @@ class PetrisEnvironment(PyEnvironment):
         
         State.reset_new_game()
         self._game_scene = GameScene()
-        self._state = self._game_scene.tetris_map
+        self._state = np.array(self._game_scene.tetris_map).flatten().tolist()
         self._episode_ended = False
         
         return ts.restart(np.array(self._state, dtype=np.int32))
