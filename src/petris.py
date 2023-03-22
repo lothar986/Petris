@@ -65,7 +65,7 @@ def main(speed: int, agent: Optional[str] = None, debug: bool = False, num_episo
         
         # Title of the window header
         pygame.display.set_caption("Petris")
-        
+
         Scenes.titleScene = TitleScene()
         Scenes.active_scene = Scenes.titleScene
         
@@ -83,7 +83,9 @@ def main(speed: int, agent: Optional[str] = None, debug: bool = False, num_episo
                               speed=speed, 
                               num_episodes=num_episodes)
         elif agent and agent.lower() == "dqn":
-            play_dqn_agent(env=tf_py_environment.TFPyEnvironment(PetrisEnvironment()), main_screen=main_screen, clock=clock, speed=speed)
+
+            tf_env: TFPyEnvironment = tf_py_environment.TFPyEnvironment(environment=PetrisEnvironment())
+            play_dqn_agent(env=tf_env, main_screen=main_screen, clock=clock, speed=speed)
         else:
             play_game(main_screen=main_screen, clock=clock, speed=speed)
         
