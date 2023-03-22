@@ -35,12 +35,9 @@ def play_random_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, sp
         logger.info("Starting Episode %s", episode)
         
         # Display episode
-        pygame.display.set_caption(f"{env.agent_name} Agent - Episode {episode}")
+        pygame.display.set_caption(f"Episode {episode}")
         
         time_step = env.reset()
-        
-        # Initialize new game
-        Scenes.active_scene = env.game_scene
         
         events: List[Event] = []
         while not time_step.is_last():
