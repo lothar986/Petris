@@ -29,7 +29,7 @@ from tf_agents.trajectories import time_step as ts
 from tf_agents.trajectories.time_step import TimeStep
 
 
-from src.scenes.scenes import GameScene, State
+from src.scenes.scenes import GameScene, State, Scenes
 from src.keyboard_controller.keyboard_controller import (move_down, move_left, 
                                                          move_right, rotate, Action)
 
@@ -40,6 +40,7 @@ class PetrisEnvironment(PyEnvironment):
     
     """Custom python environment for TF Agents. Extends PyEnvironment"""
     def __init__(self):
+        super().__init__()
         self._game_scene: GameScene = GameScene()
         
         # Specify action range: [ 0: Down, 1: Left, 2: Right, 3: Rotate, 4: Spacebar ]
@@ -54,16 +55,11 @@ class PetrisEnvironment(PyEnvironment):
         
         # State will represent the current state of the tetris map
         squeezed_state = np.squeeze(np.array(self._game_scene.tetris_map).flatten().tolist())
-        logger.error(squeezed_state.shape)
         self._state: List[int] = squeezed_state
         
         # Flag for a game ends. Normally happens when the agent loses.
         self._episode_ended: bool = False
-    
-    @property
-    def game_scene(self) -> GameScene:
-        return self._game_scene
-        
+
     def action_spec(self) -> BoundedArraySpec:
         return self._action_spec
 
@@ -101,6 +97,7 @@ class PetrisEnvironment(PyEnvironment):
         
         State.reset_new_game()
         self._game_scene = GameScene()
+        Scenes.active_scene = self._game_scene
         self._state = np.array(self._game_scene.tetris_map).flatten().tolist()
         self._episode_ended = False
         
