@@ -11,8 +11,8 @@ class LogFormatter(logging.Formatter):
     
     _grey = "\033[37m"
     _white = "\033[39m"
-    _yellow = "\x1b[33;20m"
-    _red = "\033[91m"
+    _yellow = "\033[103;30m"
+    _red = "\033[41m"
     _bold_red = "\x1b[31;1m"
     _reset = "\033[m"
     _format = "%(asctime)s.%(msecs)-3d %(levelname)-8s %(name)s:%(lineno)-10s \t %(message)s"
