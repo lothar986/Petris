@@ -54,11 +54,16 @@ class PetrisEnvironment(PyEnvironment):
         )
         
         # State will represent the current state of the tetris map
+        # Orignal Shape: (20, 10)
+        # New shape: (200, )
         squeezed_state = np.squeeze(np.array(self._game_scene.tetris_map).flatten().tolist())
-        self._state: List[int] = squeezed_state
+        self._state: np.ndarray = squeezed_state
         
         # Flag for a game ends. Normally happens when the agent loses.
         self._episode_ended: bool = False
+
+        # 
+        self._current_num_lines = State.full_line_no
 
     def action_spec(self) -> BoundedArraySpec:
         return self._action_spec
@@ -84,6 +89,9 @@ class PetrisEnvironment(PyEnvironment):
             move_left()
         elif action == Action.ROTATE:
             rotate()
+
+        # Update the state after action
+        self._state = np.array(self._game_scene.tetris_map).flatten().tolist()
     
     def _reset(self) -> TimeStep:
         """
@@ -96,12 +104,13 @@ class PetrisEnvironment(PyEnvironment):
         logger.info("Restarting Environment")
         
         State.reset_new_game()
+        self._current_num_lines = State.full_line_no
         self._game_scene = GameScene()
         Scenes.active_scene = self._game_scene
         self._state = np.array(self._game_scene.tetris_map).flatten().tolist()
         self._episode_ended = False
         
-        return ts.restart(np.array(self._state, dtype=np.int32))
+        return ts.restart(np.array([self._state], dtype=np.int32))
 
     def _step(self, action: Tensor):
         """
@@ -112,7 +121,7 @@ class PetrisEnvironment(PyEnvironment):
         """
         
         # TODO: Add line limit to end the game.
-        
+
         if self._episode_ended:
             return self.reset()
         
@@ -121,8 +130,19 @@ class PetrisEnvironment(PyEnvironment):
         
         if self._episode_ended:
             logger.info("Episode Ended")
-            return ts.termination(np.array(self._state, dtype=np.int32), reward=0)
+            return ts.termination(np.array([self._state], dtype=np.int32), reward=0)
         else:
             self.perform_action(action=action)
-            reward = State.full_line_no * 100
-            return ts.transition(np.array(self._state, dtype=np.int32), reward=reward, discount=1.0)
+
+            if State.full_line_no != self._current_num_lines:
+                reward = State.full_line_no * 100
+                self._current_num_lines = State.full_line_no
+            else:
+                reward =  0
+
+            if reward > 0:
+                logger.info("Rewarded: %s", reward)
+
+            # NOTE: We are wrapping it in [] to maintain the (1, 200) 
+            # NOTE: shape that is specified in the observation spec.
+            return ts.transition(np.array([self._state], dtype=np.int32), reward=reward, discount=1.0)
