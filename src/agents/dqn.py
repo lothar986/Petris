@@ -35,17 +35,16 @@ from src.game_runner.game_runner import render_active_scene
 
 logger = logging.getLogger(__name__) 
 
-def dense_layer(num_units):
-  return tf.keras.layers.Dense(
-      num_units,
-      activation=tf.keras.activations.relu,
-      kernel_initializer=tf.keras.initializers.VarianceScaling(
-          scale=2.0, mode='fan_in', distribution='truncated_normal'))
 
 def create_dqn(env: TFPyEnvironment) -> dqn_agent.DqnAgent:
     q_net = sequential.Sequential([
         keras.layers.Dense(
             100, 
+            activation=keras.activations.relu, 
+            kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='truncated_normal')
+        ),
+        keras.layers.Dense(
+            50, 
             activation=keras.activations.relu, 
             kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='truncated_normal')
         ),
