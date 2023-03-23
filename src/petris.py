@@ -26,7 +26,7 @@ from src.petris_environment.petris_environment import PetrisEnvironment
 from src.game_runner.game_runner import play_game
 from src.agents.random_agent import play_random_agent
 from src.agents.dqn import play_dqn_agent
-from tf_agents.environments import tf_py_environment
+from tf_agents.environments.tf_py_environment import TFPyEnvironment
 
 logger = logging.getLogger(__name__)
 
@@ -84,7 +84,7 @@ def main(speed: int, agent: Optional[str] = None, debug: bool = False, num_episo
                               num_episodes=num_episodes)
         elif agent and agent.lower() == "dqn":
 
-            tf_env: TFPyEnvironment = tf_py_environment.TFPyEnvironment(environment=PetrisEnvironment())
+            tf_env = TFPyEnvironment(environment=PetrisEnvironment())
             play_dqn_agent(env=tf_env, main_screen=main_screen, clock=clock, speed=speed)
         else:
             play_game(main_screen=main_screen, clock=clock, speed=speed)
