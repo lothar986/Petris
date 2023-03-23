@@ -456,6 +456,7 @@ class GameScene(SceneBase):
 
     @staticmethod
     def draw_game_over():
+        logger.info("Drawing Game Over")
         Scenes.titleScene.is_game_over = True
         Scenes.active_scene = Scenes.titleScene
 
@@ -523,21 +524,18 @@ class GameScene(SceneBase):
             self.calculate_speed()
 
             self.game_over = is_game_over
+            logger.info("Game Over: %s", self.game_over)
             
-            logger.debug("Tetris Map:")
+            logger.info("Tetris Map:")
             for row in self.tetris_map:
-                logger.debug("%s", row)
-            
-            # TODO: Reference the tetris_map to update the state.
+                logger.info("%s", row)
+
         else:
-            logger.debug("Moving Object Down")
-            
+            # Moves object down a unit
             if self.super_speed_mode:
                 State.score += 2
             self.moving_object[0].move_down(self.tetris_map)
-            
-            logger.debug("Head Position: %s", self.moving_object[0].head)
-            logger.debug("Blocks: %s", self.moving_object[0].blocks)
+
 
 
 def quit_game() -> bool:

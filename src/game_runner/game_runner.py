@@ -1,6 +1,6 @@
 """Collection of functions that will start the Petris game"""
 
-# Third party libs
+
 import pygame
 from pygame.time import Clock
 from pygame.surface import Surface

@@ -13,7 +13,6 @@ class Action(IntEnum):
     MOVE_RIGHT = 1
     MOVE_LEFT = 2
     ROTATE = 3
-    MOVE_TO_BOTTOM = 4
 
 
 def move_left() -> None:
@@ -34,8 +33,8 @@ def move_down() -> None:
 def rotate() -> None:
     _CONTROLLER.press(Key.up)
     _CONTROLLER.release(Key.up)
-    
-    
-def move_to_bottom() -> None:
-    _CONTROLLER.press(Key.space)
-    _CONTROLLER.release(Key.space)
+
+
+def escape() -> None:
+    _CONTROLLER.press(Key.esc)
+    _CONTROLLER.release(Key.esc)
