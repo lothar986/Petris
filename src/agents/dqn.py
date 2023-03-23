@@ -28,7 +28,7 @@ from pygame.time import Clock
 from pygame.surface import Surface
 from pygame.event import Event
 from tf_agents.environments import utils
-from tf_agents.environments.py_environment import PyEnvironment
+from tf_agents.environments.tf_py_environment import TFPyEnvironment
 
 from src.scenes.scenes import GameScene, Scenes, TitleScene
 from src.game_runner.game_runner import render_active_scene
@@ -42,14 +42,16 @@ def dense_layer(num_units):
       kernel_initializer=tf.keras.initializers.VarianceScaling(
           scale=2.0, mode='fan_in', distribution='truncated_normal'))
 
-def create_dqn(env: PyEnvironment) -> dqn_agent.DqnAgent:
-    
-    dense_layers = [dense_layer(num_units) for num_units in (100, 50)]
-    final_layer = tf.keras.layers.Dense(
-        4,
-        activation="linear"
-    )
-    q_net = sequential.Sequential(dense_layers + [tf.keras.layers.Flatten(), final_layer])
+def create_dqn(env: TFPyEnvironment) -> dqn_agent.DqnAgent:
+    q_net = sequential.Sequential([
+        keras.layers.Dense(
+            100, 
+            activation=keras.activations.relu, 
+            kernel_initializer=tf.keras.initializers.VarianceScaling(scale=2.0, mode='fan_in', distribution='truncated_normal')
+        ),
+        tf.keras.layers.Flatten(), 
+        keras.layers.Dense(4, activation="linear")
+    ])
     
     agent = dqn_agent.DqnAgent(
         env.time_step_spec(),
@@ -68,7 +70,7 @@ def create_dqn(env: PyEnvironment) -> dqn_agent.DqnAgent:
 
 
 # Function to test the environment using a fixed policy 
-def fixed_policy_test(env: PyEnvironment):
+def fixed_policy_test(env: TFPyEnvironment):
     # Define the possible actions that can be used in our environment 
     move_down_action = tf.constant([0], dtype=tf.int32)
     move_right_action = tf.constant([1], dtype=tf.int32)
@@ -85,7 +87,7 @@ def fixed_policy_test(env: PyEnvironment):
     # print("DQN Final Reward = ", cumulative_reward)
     return time_step
 
-def play_dqn_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, speed: int, num_episodes: int = 5) -> None:
+def play_dqn_agent(env: TFPyEnvironment, main_screen: Surface, clock: Clock, speed: int, num_episodes: int = 5) -> None:
     """
     Runs multiple episodes the game scene for the agent to run.
     
@@ -113,9 +115,6 @@ def play_dqn_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, speed
         
         time_step = env.reset()
         
-        # Initialize new game
-        Scenes.active_scene = env.game_scene
-        
         keyboard_events: List[Event] = []
         while not time_step.is_last():
             keyboard_events = pygame.event.get() 
@@ -133,9 +132,8 @@ def play_dqn_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, speed
             # in main() in petris.py 
 
             # Validate our environment using a random policy for 5 eps
-            # action = policy.action(time_step=time_step)
-            # logger.error(action)
-            # env.step(action=action)
+            action = policy.action(time_step=time_step)
+            env.step(action=action)
             cumulative_reward += time_step.reward
             
             # If it switches to the title scene that means the game episode is over.
