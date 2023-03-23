@@ -1,7 +1,6 @@
 """Script containing the random petris agent."""
 
 import logging
-import time
 from typing import List
 
 import pygame
@@ -10,9 +9,11 @@ from pygame.time import Clock
 from pygame.surface import Surface
 from pygame.event import Event
 from tf_agents.environments.py_environment import PyEnvironment
+from tf_agents.trajectories import TimeStep
 
 from src.scenes.scenes import GameScene, Scenes, TitleScene
 from src.game_runner.game_runner import render_active_scene
+from src.evaluation_metrics.evaluation_metrics import save_line_graph
 
 logger = logging.getLogger(__name__) 
    
@@ -29,6 +30,9 @@ def play_random_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, sp
         clock (Clock): _description_
         speed (int): _description_
     """
+
+    rewards = []
+    cumulative_rewards = 0
 
     # Runs multiple games without quiting the pygame
     for episode in range(1, num_episodes + 1):
@@ -54,10 +58,19 @@ def play_random_agent(env: PyEnvironment, main_screen: Surface, clock: Clock, sp
             
             # [1] == (1, )
             random_action = tf.random.uniform([1], 0, 4, dtype=tf.int32)
-            time_step = env.step(action=random_action)
-            
+            time_step: TimeStep = env.step(action=random_action)
+            cumulative_rewards += time_step.reward
+
             # If it switches to the title scene that means the game episode is over.
             # Recreate GameScene and run the next episode.
             if isinstance(Scenes.active_scene, TitleScene):
                 logger.info("End of Episode %s", episode)
                 break
+
+        rewards.append(time_step.reward)
+
+    logger.info("End of Random Agent")
+    logger.info("Cumulative Reward: %s", cumulative_rewards)
+    logger.info("Rewards: %s", rewards)
+
+    save_line_graph(title="", data=rewards)
