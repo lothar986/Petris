@@ -7,13 +7,19 @@ from typing import List
 
 import tensorflow as tf
 import numpy as np
+import reverb
 
 from tf_agents.agents.reinforce import reinforce_agent
+from tf_agents.drivers import py_driver
 from pygame.time import Clock
 from pygame.surface import Surface
 from tf_agents.networks import actor_distribution_network
+from tf_agents.policies import py_tf_eager_policy
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
+from tf_agents.replay_buffers import reverb_replay_buffer
+from tf_agents.replay_buffers import reverb_utils
 from tf_agents.specs import tensor_spec
+from tf_agents.utils import common
 
 from src.scenes.scenes import GameScene, Scenes, TitleScene
 from src.game_runner.game_runner import render_active_scene
@@ -31,7 +37,43 @@ def create_replay_buffer(agent: reinforce_agent.ReinforceAgent, replay_buffer_le
         replay_buffer_signature
     )
 
-    
+    table = reverb.Table(
+        table_name,
+        max_size=replay_buffer_length,
+        sampler=reverb.selectors.Uniform(),
+        remover=reverb.selectors.Fifo(),
+        rate_limiter=reverb.rate_limiters.MinSize(1),
+        signature=replay_buffer_signature
+    )
+
+    reverb_server = reverb.Server([table])
+
+    replay_buffer = reverb_replay_buffer.ReverbReplayBuffer(
+        agent.collect_data_spec,
+        table_name=table_name,
+        sequence_length=None, # TODO: FIND OUT WHY THE SEQUENCE LENGTH WAS SET TO 2 HERE 
+        local_server=reverb_server
+    )
+
+    rb_observer = reverb_utils.ReverbAddEpisodeObserver(
+        replay_buffer.py_client,
+        table_name,
+        replay_buffer_length
+    )
+
+    return replay_buffer, rb_observer
+
+def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes=10):
+    driver = py_driver.PyDriver(
+        env, 
+        py_tf_eager_policy.PyTFEagerPolicy(
+            policy, use_tf_function=True
+        ),
+        [rb_observer],
+        max_episodes=num_episodes
+    )
+    initial_time_step = env.reset()
+    driver.run(initial_time_step)
 
 # Metrics and evaluation function
 def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=10):
@@ -57,7 +99,7 @@ def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
     actor_net = actor_distribution_network.ActorDistributionNetwork(
         env.observation_spec(),
         env.action_spec(),
-        fc_layer_params=100
+        fc_layer_params=(100,)
     )
 
     # NOTE: .001 lr was the example used by the docs
@@ -78,6 +120,56 @@ def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
     agent.initialize()
 
     return agent
+
+def train_reinforce(epochs: int = 250, log_interval: int = 25, num_eval_episodes: int = 10, eval_interval: int = 50):
+    # init environment 
+    petris_environment = PetrisEnvironment()
+    train_enivronment = TFPyEnvironment(environment=petris_environment)
+    eval_environment = TFPyEnvironment(environment=petris_environment)
+
+    # Init the actor network, optimizer, and agent 
+    reinforce_agent = create_reinforce(env=train_enivronment)
+
+    # Policies
+    eval_policy = reinforce_agent.policy
+    collect_policy = reinforce_agent.collect_policy
+
+    # Init Replay Buffer
+    replay_buffer, rb_observer = create_replay_buffer(agent=reinforce_agent)
+
+    reinforce_agent.train = common.function(reinforce_agent.train)
+
+    # Reset the train step
+    reinforce_agent.train_step_counter.assign(0)
+
+    # Evaluate the policy before training
+    avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_episodes=10)
+    returns = [avg_return]
+
+    logger.info("Running for %s epochs", epochs)
+
+    for i in range(epochs):
+        logger.info("Running Epoch: %s", i)
+
+        # Save episodes to the replay buffer
+        collect_episode(petris_environment, reinforce_agent.collect_policy, rb_observer=rb_observer, num_episodes=2)
+
+        # Update the agent's network using the buffer data
+        iterator = iter(replay_buffer.as_dataset(sample_batch_size=1))
+        trajectories, _ = next(iterator)
+        train_loss = reinforce_agent.train(experience=trajectories)
+
+        replay_buffer.clear()
+
+        step = reinforce_agent.train_step_counter.numpy()
+
+        if step % log_interval == 0:
+            print('step = {0}: loss = {1}'.format(step, train_loss.loss))
+
+        if step % eval_interval == 0:
+            avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes)
+            print('step = {0}: loss = {1}'.format(step, avg_return))
+            returns.append(avg_return)
 
 
 def play_reinforce_agent(env: TFPyEnvironment, main_screen: Surface, clock: Clock, speed: int, num_episodes: int = 5) -> None:
