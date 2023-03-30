@@ -63,7 +63,7 @@ def create_replay_buffer(agent: reinforce_agent.ReinforceAgent, replay_buffer_le
 
     return replay_buffer, rb_observer
 
-def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes=10):
+def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes=20):
     driver = py_driver.PyDriver(
         env, 
         py_tf_eager_policy.PyTFEagerPolicy(
@@ -76,7 +76,7 @@ def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes=10
     driver.run(initial_time_step)
 
 # Metrics and evaluation function
-def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=10):
+def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=1):
 
     total_return = 0.0
 
@@ -87,6 +87,7 @@ def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=10):
 
         while not time_step.is_last():
             action_step = policy.action(time_step)
+            logger.info("Manual steps (avg return)")
             time_step = env.step(action_step.action)
             episode_return += time_step.reward
         total_return += episode_return
@@ -95,6 +96,7 @@ def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=10):
     return avg_return.numpy()[0]
 
 def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
+    logger.info("Creating agent")
     # Actor network 
     actor_net = actor_distribution_network.ActorDistributionNetwork(
         env.observation_spec(),
@@ -121,7 +123,7 @@ def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
 
     return agent
 
-def train_reinforce(epochs: int = 250, log_interval: int = 25, num_eval_episodes: int = 10, eval_interval: int = 50):
+def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 5, log_interval: int = 1, num_eval_episodes: int = 10, eval_interval: int = 5):
     # init environment 
     petris_environment = PetrisEnvironment()
     train_enivronment = TFPyEnvironment(environment=petris_environment)
@@ -129,13 +131,16 @@ def train_reinforce(epochs: int = 250, log_interval: int = 25, num_eval_episodes
 
     # Init the actor network, optimizer, and agent 
     reinforce_agent = create_reinforce(env=train_enivronment)
+    logger.info("Agent Created")
 
+    # TODO: THESE POLICIES ARE UNUSED, FIND CORRECT USE
     # Policies
     eval_policy = reinforce_agent.policy
     collect_policy = reinforce_agent.collect_policy
 
     # Init Replay Buffer
     replay_buffer, rb_observer = create_replay_buffer(agent=reinforce_agent)
+    logger.info("Replay Buffer Created")
 
     reinforce_agent.train = common.function(reinforce_agent.train)
 
@@ -152,21 +157,25 @@ def train_reinforce(epochs: int = 250, log_interval: int = 25, num_eval_episodes
         logger.info("Running Epoch: %s", i)
 
         # Save episodes to the replay buffer
-        collect_episode(petris_environment, reinforce_agent.collect_policy, rb_observer=rb_observer, num_episodes=2)
+        collect_episode(petris_environment, reinforce_agent.collect_policy, rb_observer=rb_observer, num_episodes=10)
 
         # Update the agent's network using the buffer data
         iterator = iter(replay_buffer.as_dataset(sample_batch_size=1))
         trajectories, _ = next(iterator)
+        logger.info("We are here")
         train_loss = reinforce_agent.train(experience=trajectories)
+        logger.info("Agent trained")
 
         replay_buffer.clear()
 
         step = reinforce_agent.train_step_counter.numpy()
+        print(f"Train step counter: {step}")
 
         if step % log_interval == 0:
             print('step = {0}: loss = {1}'.format(step, train_loss.loss))
 
         if step % eval_interval == 0:
+            print("Reached eval interval")
             avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes)
             print('step = {0}: loss = {1}'.format(step, avg_return))
             returns.append(avg_return)
