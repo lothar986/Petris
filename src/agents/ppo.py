@@ -19,6 +19,8 @@ from pygame.time import Clock
 from pygame.surface import Surface
 from pygame.event import Event
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
+from tf_agents.policies.tf_policy import TFPolicy
+from tf_agents.environments.utils import validate_py_environment
 
 
 from src.petris_environment.petris_environment import PetrisEnvironment
@@ -45,11 +47,11 @@ def create_ppo(env: TFPyEnvironment, actor_network: ActorDistributionRnnNetwork,
     
     return agent
 
-def compute_avg_return(eval_env: TFPyEnvironment, train_env: TFPyEnvironment, policy, epocs: int):
+def compute_avg_return(eval_env: TFPyEnvironment, batch_size: int, policy: TFPolicy, epocs: int):
     total_return = 0.0
 
     for _ in range(epocs):
-        policy_state = policy.get_initial_state(train_env.batch_size)
+        policy_state = policy.get_initial_state(batch_size)
         time_step = eval_env.reset()
         episode_return = 0.0
 
@@ -62,11 +64,11 @@ def compute_avg_return(eval_env: TFPyEnvironment, train_env: TFPyEnvironment, po
     avg_return = total_return / epocs
     return avg_return.numpy()[0]
 
-def train_ppo(main_screen: Surface, clock: Clock, speed: int, episodes: int = 5, batch_size: int = 1, log_interval: int = 200, eval_interval: int = 1000, steps_per_iteration: int = 20) -> None:
+def train_ppo(main_screen: Surface, clock: Clock, speed: int, episodes: int = 5, batch_size: int = 1, log_interval: int = 200, eval_interval: int = 1000, steps_per_iteration: int = 10) -> None:
 
-    petris_env = PetrisEnvironment()
-    train_env = TFPyEnvironment(environment=petris_env)
-    eval_env = TFPyEnvironment(environment=petris_env)
+
+    train_env = TFPyEnvironment(environment=PetrisEnvironment())
+    eval_env = TFPyEnvironment(environment=PetrisEnvironment())
 
     actor_network = ActorDistributionRnnNetwork(
         input_tensor_spec=train_env.observation_spec(),
@@ -110,25 +112,25 @@ def train_ppo(main_screen: Surface, clock: Clock, speed: int, episodes: int = 5,
     time_step = train_env.reset()
     policy_state = agent.collect_policy.get_initial_state(train_env.batch_size)
 
+
     for i in range(episodes):
-        print("test")
+        print(f'Episode {i}\n')
+
         time_step, policy_state = collect_driver.run(
             time_step=time_step,
             policy_state=policy_state
         )
-        print(time_step)
 
-        for _ in range(steps_per_iteration):
-            print("test2")
+        for j in range(steps_per_iteration):
             experience, _ = next(iteration)
             train_loss = agent.train(experience)
-            print("test3")
+            print(f"Training loss for iteration {j}: {train_loss.loss}")
         replay_buffer.clear()
-
-        if iteration % 1 == 0:
-            avg_return = compute_avg_return(eval_env, train_env, agent.policy, episodes)
+        print("Done with iteration")
+        if i % 1 == 0:
+            avg_return = compute_avg_return(eval_env, batch_size, agent.policy, 1)
             average_returns.append(avg_return)
-            print('\nIteration = {} = loss = {}\nAverage Return = {}'.format(iteration, train_loss.loss, avg_return))
+            print('\nIteration = {}\nLoss = {}\nAverage Return = {}'.format(i, train_loss.loss, avg_return))
 
 # keyboard_events = pygame.event.get()
         # # Press escape to stop the entire game.
