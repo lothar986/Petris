@@ -126,7 +126,7 @@ class PetrisEnvironment(PyEnvironment):
         if self._episode_ended:
             print("Restarting")
             return self.reset()
-        if self._game_scene.game_over or self._actions_taken == self._max_actions:
+        if self._game_scene.game_over: #or self._actions_taken == self._max_actions:
             print("Game over")
             self._state = np.squeeze(np.array(self._game_scene.tetris_map).flatten().tolist())
             reward = State.full_line_no * 100

@@ -8,11 +8,13 @@ from typing import List
 import tensorflow as tf
 import numpy as np
 import reverb
+import pygame
 
 from tf_agents.agents.reinforce import reinforce_agent
 from tf_agents.drivers import py_driver
 from pygame.time import Clock
 from pygame.surface import Surface
+from pygame.event import Event
 from tf_agents.networks import actor_distribution_network
 from tf_agents.policies import py_tf_eager_policy
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
@@ -21,6 +23,7 @@ from tf_agents.replay_buffers import reverb_utils
 from tf_agents.specs import tensor_spec
 from tf_agents.utils import common
 
+from src.custom_driver.reinforce_driver import ReinforceDriver
 from src.scenes.scenes import GameScene, Scenes, TitleScene
 from src.game_runner.game_runner import render_active_scene
 from src.petris_environment.petris_environment import PetrisEnvironment
@@ -51,7 +54,7 @@ def create_replay_buffer(agent: reinforce_agent.ReinforceAgent, replay_buffer_le
     replay_buffer = reverb_replay_buffer.ReverbReplayBuffer(
         agent.collect_data_spec,
         table_name=table_name,
-        sequence_length=None, # TODO: FIND OUT WHY THE SEQUENCE LENGTH WAS SET TO 2 HERE 
+        sequence_length=None, 
         local_server=reverb_server
     )
 
@@ -63,8 +66,8 @@ def create_replay_buffer(agent: reinforce_agent.ReinforceAgent, replay_buffer_le
 
     return replay_buffer, rb_observer
 
-def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes=20):
-    driver = py_driver.PyDriver(
+def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes, main_screen, clock, speed):
+    driver = ReinforceDriver(
         env, 
         py_tf_eager_policy.PyTFEagerPolicy(
             policy, use_tf_function=True
@@ -73,7 +76,7 @@ def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes=20
         max_episodes=num_episodes
     )
     initial_time_step = env.reset()
-    driver.run(initial_time_step)
+    driver.run(main_screen, clock, speed, initial_time_step)
 
 # Metrics and evaluation function
 def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=1):
@@ -123,7 +126,7 @@ def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
 
     return agent
 
-def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 5, log_interval: int = 1, num_eval_episodes: int = 10, eval_interval: int = 5):
+def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 1, log_interval: int = 1, num_eval_episodes: int = 10, eval_interval: int = 10):
     # init environment 
     petris_environment = PetrisEnvironment()
     train_enivronment = TFPyEnvironment(environment=petris_environment)
@@ -148,8 +151,10 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
     reinforce_agent.train_step_counter.assign(0)
 
     # Evaluate the policy before training
-    avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_episodes=10)
-    returns = [avg_return]
+    logger.info("Evaluating policy before training")
+    #avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_episodes=10)
+    #returns = [avg_return]
+    returns = []
 
     logger.info("Running for %s epochs", epochs)
 
@@ -157,7 +162,7 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
         logger.info("Running Epoch: %s", i)
 
         # Save episodes to the replay buffer
-        collect_episode(petris_environment, reinforce_agent.collect_policy, rb_observer=rb_observer, num_episodes=10)
+        collect_episode(petris_environment, reinforce_agent.collect_policy, rb_observer=rb_observer, num_episodes=1, main_screen=main_screen, clock=clock, speed=speed)
 
         # Update the agent's network using the buffer data
         iterator = iter(replay_buffer.as_dataset(sample_batch_size=1))
@@ -168,6 +173,7 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
 
         replay_buffer.clear()
 
+        # Keeps track of how many times the agent has been trained
         step = reinforce_agent.train_step_counter.numpy()
         print(f"Train step counter: {step}")
 
