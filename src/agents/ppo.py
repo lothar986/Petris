@@ -10,6 +10,7 @@ from tf_agents.networks.actor_distribution_rnn_network import ActorDistributionR
 from tf_agents.networks.value_rnn_network import ValueRnnNetwork
 from tf_agents.drivers.dynamic_step_driver import DynamicStepDriver
 from tf_agents.replay_buffers.tf_uniform_replay_buffer import TFUniformReplayBuffer
+from tf_agents.trajectories import Trajectory
 from tf_agents.utils.common import function
 
 import pygame
@@ -64,6 +65,11 @@ def compute_avg_return(eval_env: TFPyEnvironment, batch_size: int, policy: TFPol
     avg_return = total_return / epocs
     return avg_return.numpy()[0]
 
+def render_screen(main_screen: Surface, clock: Clock, speed: int):
+    keyboard_events = pygame.event.get()
+    Scenes.active_scene.process_input(events=keyboard_events)
+    render_active_scene(main_screen=main_screen, clock=clock, speed=speed)
+
 def train_ppo(main_screen: Surface, clock: Clock, speed: int, episodes: int = 5, batch_size: int = 1, log_interval: int = 200, eval_interval: int = 1000, steps_per_iteration: int = 10) -> None:
 
 
@@ -97,6 +103,8 @@ def train_ppo(main_screen: Surface, clock: Clock, speed: int, episodes: int = 5,
     ).prefetch(4)
     iteration = iter(dataset)
 
+    render = lambda trajectory: render_screen(trajectory=trajectory,main_screen=main_screen,clock=clock,speed=speed)
+
     collect_driver = DynamicStepDriver(
         train_env,
         agent.collect_policy,
@@ -120,9 +128,10 @@ def train_ppo(main_screen: Surface, clock: Clock, speed: int, episodes: int = 5,
             time_step=time_step,
             policy_state=policy_state
         )
-
+        print("Replay buffer size:", replay_buffer.num_frames())
         for j in range(steps_per_iteration):
             experience, _ = next(iteration)
+            render_screen(main_screen=main_screen,clock=clock,speed=speed)
             train_loss = agent.train(experience)
             print(f"Training loss for iteration {j}: {train_loss.loss}")
         replay_buffer.clear()
