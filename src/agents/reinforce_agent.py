@@ -79,20 +79,26 @@ def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes, m
     driver.run(main_screen, clock, speed, initial_time_step)
 
 # Metrics and evaluation function
-def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=1):
+def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=1, main_screen, clock, speed):
 
     total_return = 0.0
+    pygame.display.set_caption("EVALUATION")
 
     for _ in range(num_episodes):
-
+        keyboard_events : List[Event] = []
         time_step = env.reset()
         episode_return = 0.0
 
         while not time_step.is_last():
+            Scenes.active_scene.process_input(events=keyboard_events)
+            keyboard_events = pygame.event.get()
+
             action_step = policy.action(time_step)
             logger.info("Manual steps (avg return)")
             time_step = env.step(action_step.action)
             episode_return += time_step.reward
+
+            render_active_scene(main_screen=main_screen, clock=clock, speed=speed)
         total_return += episode_return
 
     avg_return = total_return / num_episodes
@@ -126,7 +132,7 @@ def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
 
     return agent
 
-def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 1, log_interval: int = 1, num_eval_episodes: int = 10, eval_interval: int = 10):
+def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 10, log_interval: int = 1, num_eval_episodes: int = 2, eval_interval: int = 1):
     # init environment 
     petris_environment = PetrisEnvironment()
     train_enivronment = TFPyEnvironment(environment=petris_environment)
@@ -152,9 +158,9 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
 
     # Evaluate the policy before training
     logger.info("Evaluating policy before training")
-    #avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_episodes=10)
-    #returns = [avg_return]
-    returns = []
+    avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_episodes=10)
+    returns = [avg_return]
+    #returns = []
 
     logger.info("Running for %s epochs", epochs)
 
@@ -162,7 +168,7 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
         logger.info("Running Epoch: %s", i)
 
         # Save episodes to the replay buffer
-        collect_episode(petris_environment, reinforce_agent.collect_policy, rb_observer=rb_observer, num_episodes=1, main_screen=main_screen, clock=clock, speed=speed)
+        collect_episode(petris_environment, reinforce_agent.collect_policy, rb_observer=rb_observer, num_episodes=2, main_screen=main_screen, clock=clock, speed=speed)
 
         # Update the agent's network using the buffer data
         iterator = iter(replay_buffer.as_dataset(sample_batch_size=1))

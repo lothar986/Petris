@@ -526,9 +526,9 @@ class GameScene(SceneBase):
             self.game_over = is_game_over
             logger.info("Game Over: %s", self.game_over)
             
-            logger.info("Tetris Map:")
-            for row in self.tetris_map:
-                logger.info("%s", row)
+            #logger.info("Tetris Map:")
+            #for row in self.tetris_map:
+            #    logger.info("%s", row)
 
         else:
             # Moves object down a unit
