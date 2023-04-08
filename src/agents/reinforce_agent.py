@@ -5,6 +5,7 @@ from __future__ import absolute_import, division, print_function
 import logging
 from typing import List
 
+import matplotlib as plt
 import tensorflow as tf
 import numpy as np
 import reverb
@@ -23,6 +24,7 @@ from tf_agents.replay_buffers import reverb_utils
 from tf_agents.specs import tensor_spec
 from tf_agents.utils import common
 
+from src.graphs import save_plot
 from src.custom_driver.reinforce_driver import ReinforceDriver
 from src.scenes.scenes import GameScene, Scenes, TitleScene
 from src.game_runner.game_runner import render_active_scene
@@ -103,6 +105,10 @@ def compute_avg_return(env: TFPyEnvironment, policy, num_episodes, main_screen, 
 
     avg_return = total_return / num_episodes
     return avg_return.numpy()[0]
+
+def visualize_metrics(returns, num_epochs, num_evaluations):
+    steps = list(range(0, num_epochs + 1, num_evaluations))
+    save_plot(x=steps, y=returns,x_label='Number of Training Steps',y_label='Average Return',title:'Average Return Per Train Step')
 
 def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
     logger.info("Creating agent")
@@ -189,9 +195,11 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
         if step % eval_interval == 0:
             print("Reached eval interval")
             avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes, main_screen, clock, speed)
-            print('step = {0}: loss = {1}'.format(step, avg_return))
+            print('step = {0}: Average Return = {1}'.format(step, avg_return))
             returns.append(avg_return)
 
+    #visualize_metrics
+    visualize_metrics(returns, epochs, eval_interval)
 
 def play_reinforce_agent(env: TFPyEnvironment, main_screen: Surface, clock: Clock, speed: int, num_episodes: int = 5) -> None:
     """

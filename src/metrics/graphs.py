@@ -33,12 +33,12 @@ def save_plt_as_image(title: str) -> None:
 
 
 def save_plot(x: List[int], 
-              y: List[int], 
+              y: List[int] = None, 
               x_label: str = "", 
               y_label: str = "", 
               title: str = "", 
               label: str = "",
-              linestyle: str = "") -> None:
+              linestyle: str = "solid") -> None:
     
     if title:
         plt.title(title)
@@ -51,13 +51,23 @@ def save_plot(x: List[int],
 
     if label:
         plt.legend(loc="upper left")
-        plt.plot(x, y, label=label, linestyle=linestyle)
+
+        if y:
+            plt.plot(x, y, label=label, linestyle=linestyle)
+        else:
+            plt.plot(x, label=label, linestyle=linestyle)
     else:
-        plt.plot(x, y)
+
+        if y:
+            plt.plot(x, y)
+        else:
+            plt.plot(x)
+
+    save_plot(title)
 
 
 def save_many_plots(x: List[List[int]], 
-                    y: List[List[int]]
+                    y: List[List[int]],
                     title: str, 
                     labels: List[str], 
                     x_label: str = "", 
@@ -80,6 +90,7 @@ def save_many_plots(x: List[List[int]],
     num_styles = len(LINE_STYLES)
 
     for idx, datum in enumerate(data):
+        #save_plot(x=x, y=y, x_label=x_Label, y_label=y_label, title=title,labels[])
         # plt.plot(datum, label=labels[idx], linestyle=LINE_STYLES[idx % num_styles])
 
     plt.title(title)
