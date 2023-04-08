@@ -3,6 +3,7 @@
 import logging
 from typing import List
 
+import numpy as np
 import matplotlib.pyplot as plt
 
 from src import paths
@@ -32,13 +33,14 @@ def save_plt_as_image(title: str) -> None:
     plt.close()
 
 
-def save_plot(x: List[int], 
-              y: List[int] = None, 
-              x_label: str = "", 
-              y_label: str = "", 
-              title: str = "", 
-              label: str = "",
-              linestyle: str = "solid") -> None:
+def plot_one(x: List[int], 
+             y: List[int] = None, 
+             x_label: str = "", 
+             y_label: str = "", 
+             title: str = "", 
+             label: str = "",
+             linestyle: str = "solid",
+             save: bool = False) -> None:
     
     if title:
         plt.title(title)
@@ -62,14 +64,15 @@ def save_plot(x: List[int],
             plt.plot(x, y)
         else:
             plt.plot(x)
-
-    save_plot(title)
+            
+    if title and save:
+        save_plt_as_image(title=title)
 
 
 def save_many_plots(x: List[List[int]], 
-                    y: List[List[int]],
                     title: str, 
                     labels: List[str], 
+                    y: List[List[int]] = None,
                     x_label: str = "", 
                     y_label: str = "") -> None:
     """
@@ -80,22 +83,34 @@ def save_many_plots(x: List[List[int]],
         x_label (str, optional): _description_. Defaults to "".
         y_label (str, optional): _description_. Defaults to "".
     """
+    
+    x = np.array(x)
+    if y:
+        y = np.array(y)
+
+
+    logger.info("X: %s", x.shape)
+    logger.info("Y: %s", y.shape)
 
     if len(x) != len(labels):
         logger.error("Unable to plot data make there is an equal amount labels for the data list.")
         return
-    elif len(x) != len(y):
-        logger.error("")
+    elif x and y and x.shape != y.shape:
+        logger.error("X and Y must be the same dimensions")
+        return
 
     num_styles = len(LINE_STYLES)
 
-    for idx, datum in enumerate(data):
-        #save_plot(x=x, y=y, x_label=x_Label, y_label=y_label, title=title,labels[])
-        # plt.plot(datum, label=labels[idx], linestyle=LINE_STYLES[idx % num_styles])
+    if y:
+        for idx in range(len(x)):
+            plot_one(x=x[idx], y=y[idx], label=labels[idx], linestyle=LINE_STYLES[idx % num_styles])
+    else:
+        for idx, datum in enumerate(x):
+            plot_one(x=datum, label=labels[idx], linestyle=LINE_STYLES[idx % num_styles])
 
     plt.title(title)
     plt.legend(loc="upper left")
     plt.xlabel(x_label)
     plt.ylabel(y_label)
 
-    save_plt(title=title)
+    save_plt_as_image(title=title)
