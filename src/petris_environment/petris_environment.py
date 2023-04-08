@@ -81,16 +81,16 @@ class PetrisEnvironment(PyEnvironment):
         """
 
         if action == Action.MOVE_DOWN:
-            print("down")
+            #print("down")
             move_down()
         elif action == Action.MOVE_RIGHT:
-            print("right")
+            #print("right")
             move_right()
         elif action == Action.MOVE_LEFT:
-            print("left")
+            #print("left")
             move_left()
         elif action == Action.ROTATE:
-            print("rotate")
+            #print("rotate")
             rotate()
 
         # Update the state after action

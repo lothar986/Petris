@@ -79,7 +79,7 @@ def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes, m
     driver.run(main_screen, clock, speed, initial_time_step)
 
 # Metrics and evaluation function
-def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=1, main_screen, clock, speed):
+def compute_avg_return(env: TFPyEnvironment, policy, num_episodes, main_screen, clock, speed):
 
     total_return = 0.0
     pygame.display.set_caption("EVALUATION")
@@ -94,7 +94,7 @@ def compute_avg_return(env: TFPyEnvironment, policy, num_episodes=1, main_screen
             keyboard_events = pygame.event.get()
 
             action_step = policy.action(time_step)
-            logger.info("Manual steps (avg return)")
+            #logger.info("Manual steps (avg return)")
             time_step = env.step(action_step.action)
             episode_return += time_step.reward
 
@@ -132,7 +132,7 @@ def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
 
     return agent
 
-def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 10, log_interval: int = 1, num_eval_episodes: int = 2, eval_interval: int = 1):
+def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 10, log_interval: int = 1, num_eval_episodes: int = 2, eval_interval: int = 5):
     # init environment 
     petris_environment = PetrisEnvironment()
     train_enivronment = TFPyEnvironment(environment=petris_environment)
@@ -158,9 +158,9 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
 
     # Evaluate the policy before training
     logger.info("Evaluating policy before training")
-    avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_episodes=10)
-    returns = [avg_return]
-    #returns = []
+    #avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes, main_screen, clock, speed)
+    #returns = [avg_return]
+    returns = []
 
     logger.info("Running for %s epochs", epochs)
 
@@ -188,7 +188,7 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
 
         if step % eval_interval == 0:
             print("Reached eval interval")
-            avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes)
+            avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes, main_screen, clock, speed)
             print('step = {0}: loss = {1}'.format(step, avg_return))
             returns.append(avg_return)
 

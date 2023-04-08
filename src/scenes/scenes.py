@@ -456,7 +456,7 @@ class GameScene(SceneBase):
 
     @staticmethod
     def draw_game_over():
-        logger.info("Drawing Game Over")
+        #ogger.info("Drawing Game Over")
         Scenes.titleScene.is_game_over = True
         Scenes.active_scene = Scenes.titleScene
 
@@ -524,7 +524,7 @@ class GameScene(SceneBase):
             self.calculate_speed()
 
             self.game_over = is_game_over
-            logger.info("Game Over: %s", self.game_over)
+            #logger.info("Game Over: %s", self.game_over)
             
             #logger.info("Tetris Map:")
             #for row in self.tetris_map:
