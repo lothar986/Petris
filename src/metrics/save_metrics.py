@@ -4,6 +4,7 @@ import logging
 from typing import List
 
 import numpy as np
+import json
 import matplotlib.pyplot as plt
 
 from src import paths
@@ -12,6 +13,17 @@ logger = logging.getLogger(__name__)
 
 RESULTS_DIR = paths.BASE_DIR / "results"
 LINE_STYLES = ["solid", "dashed", "dotted", "dashdot"]
+
+def save_json(results, iteration, is_loss) -> None: 
+    if (is_loss=True):
+        json_result = {'iteration': iteration, 'loss': results}
+        file_path = RESULTS_DIR / f"loss_iteration-{iteration}.json"
+    else: 
+        json_result = {'iteration': iteration, 'average_return': results}
+        file_path = RESULTS_DIR / f"avg_return_iteration-{iteration}.json"
+
+    with open(file_path, 'w') as f:
+        json.dump(json_result, f)
 
 
 def save_plt_as_image(title: str) -> None:
