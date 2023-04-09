@@ -319,7 +319,7 @@ class GameScene(SceneBase):
         # Insert the column array of zeros into each row to complete the entire map
         self.tetris_map = [self.empty_line[:] for _ in range(GameMetaData.map_row_no)]
 
-        logger.info("Tetris Map Shape: (%s, %s)", GameMetaData.map_row_no, GameMetaData.map_column_no)
+        #logger.info("Tetris Map Shape: (%s, %s)", GameMetaData.map_row_no, GameMetaData.map_column_no)
 
         # Get two shapes. First one being the controlling shape and the second one being the next.
         self.moving_object: List[Shape] = [
@@ -456,7 +456,7 @@ class GameScene(SceneBase):
 
     @staticmethod
     def draw_game_over():
-        logger.info("Drawing Game Over")
+        #ogger.info("Drawing Game Over")
         Scenes.titleScene.is_game_over = True
         Scenes.active_scene = Scenes.titleScene
 
@@ -524,11 +524,11 @@ class GameScene(SceneBase):
             self.calculate_speed()
 
             self.game_over = is_game_over
-            logger.info("Game Over: %s", self.game_over)
+            #logger.info("Game Over: %s", self.game_over)
             
-            logger.info("Tetris Map:")
-            for row in self.tetris_map:
-                logger.info("%s", row)
+            #logger.info("Tetris Map:")
+            #for row in self.tetris_map:
+            #    logger.info("%s", row)
 
         else:
             # Moves object down a unit

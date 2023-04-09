@@ -166,3 +166,6 @@ logs/*
 
 # VS Code settings
 .vscode/*
+
+# results
+results/*
