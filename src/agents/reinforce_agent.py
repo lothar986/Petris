@@ -24,7 +24,7 @@ from tf_agents.replay_buffers import reverb_utils
 from tf_agents.specs import tensor_spec
 from tf_agents.utils import common
 
-from src.metrics.graphs import plot_one
+from src.metrics.save_metrics import plot_one, save_json
 from src.custom_driver.reinforce_driver import ReinforceDriver
 from src.scenes.scenes import GameScene, Scenes, TitleScene
 from src.game_runner.game_runner import render_active_scene
@@ -106,14 +106,15 @@ def compute_avg_return(env: TFPyEnvironment, policy, num_episodes, main_screen, 
     avg_return = total_return / num_episodes
     return avg_return.numpy()[0]
 
-def visualize_metrics(metric, num_epochs, num_evaluations, isLossPlot):
+def visualize_metrics(metric, num_epochs, num_evaluations, is_loss, iteration):
     steps = range(0, num_epochs + 1, num_evaluations)
 
-    if (isLossPlot == True):
-        plot_one(x=steps, y=metric,x_label='Number of Training Steps',y_label='Training Loss',title='Training Loss Per Train Step',save=True)
+    if (is_loss == True):
+        plot_one(x=steps, y=metric,x_label='Number of Training Steps',y_label='Training Loss',title="Training Loss Per Train Step; Iteration - "+str(iteration),save=True)
     else:
-        plot_one(x=steps, y=metric,x_label='Number of Training Steps',y_label='Average Return',title='Average Return Per Train Step',save=True)
-    
+        plot_one(x=steps, y=metric,x_label='Number of Training Steps',y_label='Average Return',title="Average Return Per Train Step; Iteration - "+str(iteration),save=True)
+
+    save_json(results=metric, iteration=iteration, is_loss=is_loss)
 
 def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
     logger.info("Creating agent")
@@ -143,7 +144,7 @@ def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
 
     return agent
 
-def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 6, log_interval: int = 1, num_eval_episodes: int = 1, eval_interval: int = 3):
+def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 6, log_interval: int = 1, num_eval_episodes: int = 1, eval_interval: int = 3, iteration: int = 0):
     # init environment 
     petris_environment = PetrisEnvironment()
     train_enivronment = TFPyEnvironment(environment=petris_environment)
@@ -171,7 +172,6 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
     logger.info("Evaluating policy before training")
     avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes, main_screen, clock, speed)
     returns = [avg_return]
-    #returns = []
     losses = [0.00]
 
     logger.info("Running for %s epochs", epochs)
@@ -204,8 +204,8 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
             returns.append(avg_return)
 
     # Save plots for loss and returns
-    visualize_metrics(losses, epochs, log_interval, isLossPlot=True)
-    visualize_metrics(returns, epochs, eval_interval, isLossPlot=False)
+    visualize_metrics(losses, epochs, log_interval, is_loss=True, iteration)
+    visualize_metrics(returns, epochs, eval_interval, is_loss=False, iteration)
 
 def play_reinforce_agent(env: TFPyEnvironment, main_screen: Surface, clock: Clock, speed: int, num_episodes: int = 5) -> None:
     """
