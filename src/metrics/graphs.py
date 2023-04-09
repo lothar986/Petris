@@ -42,6 +42,9 @@ def plot_one(x: List[int],
              linestyle: str = "solid",
              save: bool = False) -> None:
     
+    logger.info(x)
+    logger.info(y)
+    
     if title:
         plt.title(title)
 
