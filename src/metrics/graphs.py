@@ -42,8 +42,8 @@ def plot_one(x: List[int],
              linestyle: str = "solid",
              save: bool = False) -> None:
     
-    logger.info(x)
-    logger.info(y)
+    #logger.info(x)
+    #logger.info(y)
     
     if title:
         plt.title(title)
@@ -91,9 +91,8 @@ def save_many_plots(x: List[List[int]],
     if y:
         y = np.array(y)
 
-
-    logger.info("X: %s", x.shape)
-    logger.info("Y: %s", y.shape)
+    #logger.info("X: %s", x.shape)
+    #logger.info("Y: %s", y.shape)
 
     if len(x) != len(labels):
         logger.error("Unable to plot data make there is an equal amount labels for the data list.")

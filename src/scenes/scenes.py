@@ -319,7 +319,7 @@ class GameScene(SceneBase):
         # Insert the column array of zeros into each row to complete the entire map
         self.tetris_map = [self.empty_line[:] for _ in range(GameMetaData.map_row_no)]
 
-        logger.info("Tetris Map Shape: (%s, %s)", GameMetaData.map_row_no, GameMetaData.map_column_no)
+        #logger.info("Tetris Map Shape: (%s, %s)", GameMetaData.map_row_no, GameMetaData.map_column_no)
 
         # Get two shapes. First one being the controlling shape and the second one being the next.
         self.moving_object: List[Shape] = [

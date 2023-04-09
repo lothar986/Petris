@@ -106,11 +106,14 @@ def compute_avg_return(env: TFPyEnvironment, policy, num_episodes, main_screen, 
     avg_return = total_return / num_episodes
     return avg_return.numpy()[0]
 
-def visualize_metrics(returns, num_epochs, num_evaluations):
-    steps = list(range(0, num_epochs, num_evaluations))
-    print(len(steps))
-    print(len(returns))
-    plot_one(x=steps, y=returns,x_label='Number of Training Steps',y_label='Average Return',title='Average Return Per Train Step',save=True)
+def visualize_metrics(metric, num_epochs, num_evaluations, isLossPlot):
+    steps = range(0, num_epochs + 1, num_evaluations)
+
+    if (isLossPlot == True):
+        plot_one(x=steps, y=metric,x_label='Number of Training Steps',y_label='Training Loss',title='Training Loss Per Train Step',save=True)
+    else:
+        plot_one(x=steps, y=metric,x_label='Number of Training Steps',y_label='Average Return',title='Average Return Per Train Step',save=True)
+    
 
 def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
     logger.info("Creating agent")
@@ -140,7 +143,7 @@ def create_reinforce(env: TFPyEnvironment) -> reinforce_agent.ReinforceAgent:
 
     return agent
 
-def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 3, log_interval: int = 1, num_eval_episodes: int = 1, eval_interval: int = 1):
+def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int = 6, log_interval: int = 1, num_eval_episodes: int = 1, eval_interval: int = 3):
     # init environment 
     petris_environment = PetrisEnvironment()
     train_enivronment = TFPyEnvironment(environment=petris_environment)
@@ -166,9 +169,10 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
 
     # Evaluate the policy before training
     logger.info("Evaluating policy before training")
-    #avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes, main_screen, clock, speed)
-    #returns = [avg_return]
-    returns = []
+    avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes, main_screen, clock, speed)
+    returns = [avg_return]
+    #returns = []
+    losses = [0.00]
 
     logger.info("Running for %s epochs", epochs)
 
@@ -181,7 +185,6 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
         # Update the agent's network using the buffer data
         iterator = iter(replay_buffer.as_dataset(sample_batch_size=1))
         trajectories, _ = next(iterator)
-        logger.info("We are here")
         train_loss = reinforce_agent.train(experience=trajectories)
         logger.info("Agent trained")
 
@@ -192,16 +195,17 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, epochs: int 
         print(f"Train step counter: {step}")
 
         if step % log_interval == 0:
+            losses.append(train_loss.loss)
             print('step = {0}: loss = {1}'.format(step, train_loss.loss))
 
         if step % eval_interval == 0:
-            print("Reached eval interval")
             avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, num_eval_episodes, main_screen, clock, speed)
             print('step = {0}: Average Return = {1}'.format(step, avg_return))
             returns.append(avg_return)
 
-    #visualize_metrics
-    visualize_metrics(returns, epochs, eval_interval)
+    # Save plots for loss and returns
+    visualize_metrics(losses, epochs, log_interval, isLossPlot=True)
+    visualize_metrics(returns, epochs, eval_interval, isLossPlot=False)
 
 def play_reinforce_agent(env: TFPyEnvironment, main_screen: Surface, clock: Clock, speed: int, num_episodes: int = 5) -> None:
     """
