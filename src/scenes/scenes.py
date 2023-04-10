@@ -334,6 +334,7 @@ class GameScene(SceneBase):
         self.maximum_movement_speed = 5
         self.super_speed_mode = False
         self.game_over = False
+        self.collision = False
 
     def process_input(self, events: List[Event]) -> bool:
         """Process key presses in a running game
@@ -492,7 +493,8 @@ class GameScene(SceneBase):
 
                 # Mark this location as 'occupied'
                 self.tetris_map[row_idx][col_idx] = get_colour_number_by_name(self.moving_object[0].colour.name)
-            
+                self.collision = True
+                
             if not is_game_over:
                 temp = []
                 
@@ -535,8 +537,24 @@ class GameScene(SceneBase):
             if self.super_speed_mode:
                 State.score += 2
             self.moving_object[0].move_down(self.tetris_map)
-
-
+    
+    def is_block_finished(self) -> bool:
+        if self.moving_object[0].is_finished_or_collided(self.tetris_map):
+            self.movement_speed = 0
+            is_game_over = False
+            
+            # Updating the tetris map by marking the occupied areas.
+            for block in self.moving_object[0].blocks:
+                row_idx = block[0]
+                col_idx = block[1]
+                
+                # If the shape is at the very top then there is no room game over.
+                if row_idx == 0:
+                    return False
+                else:
+                    return True
+        else:
+            return False 
 
 def quit_game() -> bool:
     """Quits the game"""

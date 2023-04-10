@@ -1,0 +1,28 @@
+{
+    "agent": "reinforce",
+    "params": {
+        "layers": [100],
+        "learning_rate": 0.2,
+        "epoch": 5,
+        "log_interval": 1,
+        "num_eval_episodes": 1,
+        "eval_interval": 1,
+        "collect_num_episodes": 1,
+        "max_actions": 25,
+        "holes_penalty": 0.9,
+        "height_penalty": 0.7,
+        "game_over_penalty": 50.0,
+        "line_1_reward": 100.0,
+        "line_2_reward": 300.0,
+        "line_3_reward": 650.0,
+        "line_4_reward": 1000.0,
+        "block_placed_reward": 15.0,
+        "press_down_reward":0.5
+    },
+    "results": [
+        {
+            "average_return": ["0.0", "-0.0"],
+            "loss": ["0.0", "0.0"]
+        }
+    ]
+}

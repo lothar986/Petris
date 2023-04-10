@@ -15,11 +15,11 @@ RESULTS_DIR = paths.BASE_DIR / "results"
 LINE_STYLES = ["solid", "dashed", "dotted", "dashdot"]
 
 def save_json(results, iteration, is_loss) -> None: 
-    if (is_loss=True):
-        json_result = {'iteration': iteration, 'loss': results}
+    if (is_loss == True):
+        json_result = {'iteration': iteration, 'loss': list(map(str,results))}
         file_path = RESULTS_DIR / f"loss_iteration-{iteration}.json"
     else: 
-        json_result = {'iteration': iteration, 'average_return': results}
+        json_result = {'iteration': iteration, 'average_return': list(map(str,results))}
         file_path = RESULTS_DIR / f"avg_return_iteration-{iteration}.json"
 
     with open(file_path, 'w') as f:

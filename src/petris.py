@@ -21,7 +21,7 @@ from pygame.surface import Surface
 from src import paths
 from src.log.log import initialize_logger
 from src.scenes.scenes import GameMetaData, TitleScene, Scenes
-
+from src.params.parameters import Parameters
 from src.petris_environment.petris_environment import PetrisEnvironment
 from src.game_runner.game_runner import play_game
 from src.agents.random_agent import play_random_agent
@@ -36,7 +36,7 @@ PETRIS_LOG_DIR = "logs"
 PETRIS_LOG_PATH = paths.BASE_DIR / PETRIS_LOG_DIR / PETRIS_LOG_FILE
 
 
-def main(speed: int, agent: Optional[str] = None, debug: bool = False, num_episodes: int = 5) -> int:
+def main(speed: int, paramFile: Optional[str] = None , debug: bool = False) -> int:
     """
     Main function for the game
 
@@ -53,7 +53,7 @@ def main(speed: int, agent: Optional[str] = None, debug: bool = False, num_episo
         initialize_logger(log_path=PETRIS_LOG_PATH, debug=debug)
         
         logger.info("Starting Petris Game")
-        logger.info("Args: (speed=%s, agent=%s)", speed, agent)
+        logger.info("Args: (speed=%s, parameters=%s)", speed, paramFile)
         
         # Positioned Window on the screen
         os.environ['SDL_VIDEO_WINDOW_POS'] = "(100,100)"
@@ -76,29 +76,32 @@ def main(speed: int, agent: Optional[str] = None, debug: bool = False, num_episo
                      Scenes.titleScene, Scenes.gameScene, Scenes.active_scene)
 
         logger.info("Spinning up GUI")
-        
-        if agent and agent.lower() == "random":
-            play_random_agent(env=PetrisEnvironment(), 
-                              main_screen=main_screen, 
-                              clock=clock, 
-                              speed=speed, 
-                              num_episodes=num_episodes)
-        elif agent and agent.lower() == "dqn":
-
-            tf_env = TFPyEnvironment(environment=PetrisEnvironment())
-            play_dqn_agent(env=tf_env, main_screen=main_screen, clock=clock, speed=speed)
-        elif agent and agent.lower() == "reinforce":
-            print("Let's play reinforce")
-            train_reinforce(main_screen=main_screen, clock=clock, speed=speed)    
+        if paramFile and os.path.isfile(paramFile):
+            parameters = Parameters(paramFile)
+            agent = parameters.agent
+            iterations = parameters.iterations.num_iterations if parameters.iterations and parameters.iterations.num_iterations > 0 else 1
+            for iteration in range(iterations):
+                if agent and agent.lower() == "random":
+                    play_random_agent(env=PetrisEnvironment(parameters=parameters), 
+                                    main_screen=main_screen, 
+                                    clock=clock, 
+                                    speed=speed, 
+                                    num_episodes=parameters.agent.epoch)
+                elif agent and agent.lower() == "dqn":
+                    tf_env = TFPyEnvironment(environment=PetrisEnvironment(parameters=parameters))
+                    play_dqn_agent(env=tf_env, main_screen=main_screen, clock=clock, speed=speed)
+                elif agent and agent.lower() == "reinforce":
+                    print("Let's play reinforce")
+                    train_reinforce(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters, iteration=iteration)
         else:
+            logger.info('No parameters found, playing game instead')
             play_game(main_screen=main_screen, clock=clock, speed=speed)
-        
         pygame.quit()
     except Exception as ex:
         exit_code = 1
         logger.exception(ex)
     finally:
-        logger.info("End of Petris Game: %s", exit_code)
+        logger.info("End of Petris Game! Code: %s", exit_code)
         
     return exit_code
 
@@ -110,16 +113,13 @@ if __name__ == "__main__":
     parser.add_argument("-s", "--speed", action="store", required=False, default=50, type=int,
                         help="The speed at which the tetris piece gets dropped. "
                         "Higher is faster. Default is 50.")
-    parser.add_argument("-a", "--agent", action="store", required=False, default=None, type=str,
-                        help="Agent flag.")
     parser.add_argument("-d", "--debug", action="store_true", required=False, default=False,
                         help="Displays the debug logs.")
-    parser.add_argument("-e", "--num-episodes", action="store", required=False, default=5, type=int,
-                        help="Number of episodes for the agent to run.")
+    parser.add_argument("-p", "--parameters", action="store", required=False,type=str,
+                        help="JSON file that contains the parameters for running the agent and enviornment.")
     
     args, _ = parser.parse_known_args()
     
     sys.exit(main(speed=args.speed, 
-                  agent=args.agent, 
-                  debug=args.debug, 
-                  num_episodes=args.num_episodes))
+                  paramFile = args.parameters,
+                  debug=args.debug))

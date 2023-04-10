@@ -1,0 +1,28 @@
+{
+    "agent": "reinforce",
+    "params": {
+        "agent":{
+            "layers": [100],
+            "learning_rate": 0.2,
+            "epochs": 25,
+            "log_interval": 1,
+            "num_eval_episodes": 1,
+            "eval_interval": 5,
+            "collect_num_episodes": 1
+        },
+        "environment":{
+            "max_actions": 25,
+            "holes_penalty": 0.9,
+            "height_penalty": 0.7,
+            "game_over_penalty": 50.0,
+            "line_reward": [100.0,300.0,500.0,800.0],
+            "block_placed_reward": 15.0,
+            "press_down_reward":1.0  
+        }
+    },
+    "iterations":{
+       "num_iterations": 3,
+        "delta": 0,
+        "to_change": "environment.block_placed_reward" 
+    }
+}
