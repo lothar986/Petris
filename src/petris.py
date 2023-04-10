@@ -21,11 +21,12 @@ from pygame.surface import Surface
 from src import paths
 from src.log.log import initialize_logger
 from src.scenes.scenes import GameMetaData, TitleScene, Scenes
-from src.params.parameters import Parameters
+from src.params.parameters import Parameters, get_nested_value
 from src.petris_environment.petris_environment import PetrisEnvironment
 from src.game_runner.game_runner import play_game
 from src.agents.random_agent import play_random_agent
 from src.agents.dqn import play_dqn_agent
+from src.agents.ppo import train_ppo
 from src.agents.reinforce_agent import train_reinforce
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
 
@@ -78,6 +79,8 @@ def main(speed: int, paramFile: Optional[str] = None , debug: bool = False) -> i
         logger.info("Spinning up GUI")
         if paramFile and os.path.isfile(paramFile):
             parameters = Parameters(paramFile)
+            if "index" not in parameters.iterations:
+                parameters.iterations.index = None
             agent = parameters.agent
             iterations = parameters.iterations.num_iterations if parameters.iterations and parameters.iterations.num_iterations > 0 else 1
             for iteration in range(iterations):
@@ -91,8 +94,17 @@ def main(speed: int, paramFile: Optional[str] = None , debug: bool = False) -> i
                     tf_env = TFPyEnvironment(environment=PetrisEnvironment(parameters=parameters))
                     play_dqn_agent(env=tf_env, main_screen=main_screen, clock=clock, speed=speed)
                 elif agent and agent.lower() == "reinforce":
-                    print("Let's play reinforce")
+                    print("Training Reinforce")
                     train_reinforce(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters, iteration=iteration)
+                elif agent and agent.lower() == "ppo":
+                    print("Training PPO")
+                    train_ppo(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters, iteration=iteration)
+                prev = get_nested_value(parameters.params,parameters.iterations.to_change, parameters.iterations.index)
+                parameters.update_param(
+                    parameters.iterations.to_change, 
+                    prev + parameters.iterations.delta,
+                    parameters.iterations.index
+                )
         else:
             logger.info('No parameters found, playing game instead')
             play_game(main_screen=main_screen, clock=clock, speed=speed)

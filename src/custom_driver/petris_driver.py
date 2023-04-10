@@ -64,7 +64,7 @@ class PetrisDriver(driver.Driver):
     keyboard_events : List[Event] = []
     
     while num_steps < self._max_steps and num_episodes < self._max_episodes:
-      pygame.display.set_caption(f"COLLECTION | Iteration {iteration} | {self._agent} | Epoch {epoch} | {'Episode' if self._max_episodes != np.inf else 'Step'} {num_episodes if self._max_episodes != np.inf else num_steps}")
+      pygame.display.set_caption(f"COLLECTION | {self._agent} | Iteration {iteration+1} | Epoch {epoch+1} | {'Episode' if self._max_episodes != np.inf else 'Step'} {num_episodes+1 if self._max_episodes != np.inf else num_steps+1}")
       Scenes.active_scene.process_input(events=keyboard_events)
       keyboard_events = pygame.event.get()
 

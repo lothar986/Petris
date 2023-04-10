@@ -21,12 +21,15 @@ class Parameters:
         self.iterations = self.data.iterations
         logger.info("Parameters Enabled!")      
 
-    def update_param(self, param_path, new_value):
-        keys = param_path.split(".")
-        data = self.data
+    def update_param(self, param_path, new_value, index=None):
+        keys = param_path
+        data = self.params
         for key in keys[:-1]:
             data = data[key]
-        data[keys[-1]] = new_value
+        if index is not None and isinstance(data[keys[-1]], list):
+            data[keys[-1]][index] = new_value
+        else:
+            data[keys[-1]] = new_value
 
     def save_to_json(self, file_path):
         with open(file_path, "w") as file:
@@ -34,3 +37,10 @@ class Parameters:
 
     def format_output(self):
         return None
+    
+def get_nested_value(data, keys, index=None):
+        for key in keys:
+            data = data[key]
+        if index is not None and isinstance(data, list):
+            return data[index]
+        return data
