@@ -1,4 +1,4 @@
-import json,logging
+import json,logging,hashlib,os
 
 logger = logging.getLogger(__name__) 
 
@@ -14,12 +14,33 @@ class NestedDict(dict):
 
 class Parameters:
     def __init__(self, json_file_path):
+        sha256 = hashlib.sha256()
         with open(json_file_path, "r") as file:
             self.data = json.load(file, object_hook=NestedDict)
+            while True:
+                data = file.read(65536)
+                if not data:
+                    break
+                sha256.update(data)
+            
+        self.hash = sha256.hexdigest()[:6]
         self.agent = self.data.agent
         self.params = self.data.params
         self.iterations = self.data.iterations
-        logger.info("Parameters Enabled!")      
+
+        os.makedirs("../../results/original", exist_ok=True)
+        with open(f'../../results/original/{self.hash}','w') as file:
+            file.write(json.dumps({
+                'agent': self.agent,
+                'hash': self.hash,
+                'params': self.params,
+                'iterations': self.iterations
+            }))
+        if os.path.isfile(f'../../results/original/{self.hash}'):
+            logger.info("Copy of input file created successfully. Parameters Enabled!") 
+        else:
+            logger.error("Copy of input file not found. Double check before editing input file!") 
+
 
     def update_param(self, param_path, new_value, index=None):
         keys = param_path
@@ -35,8 +56,10 @@ class Parameters:
         with open(file_path, "w") as file:
             json.dump(self.data, file, indent=4)
 
-    def format_output(self):
-        return None
+    def format_output(self) -> NestedDict:
+        output = self.data.pop('iterations')
+        output.parent_hash = self.hash
+        return output
     
 def get_nested_value(data, keys, index=None):
         for key in keys:
