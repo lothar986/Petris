@@ -2,27 +2,29 @@
     "agent": "reinforce",
     "params": {
         "agent":{
-            "layers": [100],
-            "learning_rate": 0.2,
-            "epochs": 25,
+            "layers": [200,71],
+            "learning_rate": 0.05,
+            "epochs": 10,
+            "epsilon": 0.08,
             "log_interval": 1,
             "num_eval_episodes": 1,
-            "eval_interval": 5,
+            "eval_interval": 10,
             "collect_num_episodes": 1
         },
         "environment":{
-            "max_actions": 25,
+            "max_actions": 500,
             "holes_penalty": 0.9,
             "height_penalty": 0.7,
             "game_over_penalty": 50.0,
             "line_reward": [100.0,300.0,500.0,800.0],
-            "block_placed_reward": 15.0,
-            "press_down_reward":1.0  
+            "block_placed_reward": 10.0,
+            "press_down_reward":0.5  
         }
     },
     "iterations":{
-       "num_iterations": 3,
-        "delta": 0,
-        "to_change": "environment.block_placed_reward" 
+       "num_iterations": 5,
+        "delta": -3,
+        "index":1,
+        "to_change": ["agent","layers"]
     }
 }

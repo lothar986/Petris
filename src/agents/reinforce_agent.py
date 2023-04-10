@@ -18,6 +18,7 @@ from pygame.surface import Surface
 from pygame.event import Event
 from tf_agents.networks import actor_distribution_network
 from tf_agents.policies import py_tf_eager_policy
+from tf_agents.policies import epsilon_greedy_policy
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
 from tf_agents.replay_buffers import reverb_replay_buffer
 from tf_agents.replay_buffers import reverb_utils
@@ -69,14 +70,17 @@ def create_replay_buffer(agent: reinforce_agent.ReinforceAgent, replay_buffer_le
 
     return replay_buffer, rb_observer
 
-def collect_episode(env: PetrisEnvironment, policy, rb_observer, num_episodes, main_screen, clock, speed, epoch, iteration, agent):
+def collect_episode(env: PetrisEnvironment, policy, rb_observer, parameters, main_screen, clock, speed, epoch, iteration, agent):
     driver = PetrisDriver(
         env, 
         py_tf_eager_policy.PyTFEagerPolicy(
-            policy, use_tf_function=True
+            epsilon_greedy_policy.EpsilonGreedyPolicy(
+                policy=policy,
+                epsilon=parameters.epsilon
+            ), use_tf_function=True
         ),
         [rb_observer],
-        max_episodes=num_episodes,
+        max_episodes=parameters.collect_num_episodes,
         agent=agent
     )
     initial_time_step = env.reset()
@@ -88,7 +92,7 @@ def compute_avg_return(env: TFPyEnvironment, policy, num_episodes, main_screen, 
     total_return = 0.0
 
     for _ in range(num_episodes):
-        pygame.display.set_caption(f"EVALUATION | Iteration {iteration} | {agent} | Epoch {epoch} | Episode {_}")
+        pygame.display.set_caption(f"EVALUATION | {agent} | Iteration {iteration+1} | Epoch {epoch+1} | Episode {_+1}")
         keyboard_events : List[Event] = []
         time_step = env.reset()
         episode_return = 0.0
@@ -173,7 +177,7 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, parameters: 
 
     # Evaluate the policy before training
     logger.info("Evaluating policy before training")
-    avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, parameters.num_eval_episodes, main_screen, clock, speed, 0, iteration, "Reinforce")
+    avg_return =  0#compute_avg_return(eval_environment, reinforce_agent.policy, parameters.num_eval_episodes, main_screen, clock, speed, 0, iteration, "Reinforce")
     returns = [avg_return]
     losses = [0.00]
 
@@ -183,8 +187,18 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, parameters: 
         logger.info("Running Epoch: %s", i)
 
         # Save episodes to the replay buffer
-        collect_episode(petris_environment, reinforce_agent.collect_policy, rb_observer=rb_observer, num_episodes=parameters.collect_num_episodes, main_screen=main_screen, clock=clock, speed=speed, epoch=i, iteration=iteration, agent="Reinforce")
-
+        collect_episode(
+            petris_environment, 
+            reinforce_agent.collect_policy, 
+            rb_observer=rb_observer, 
+            parameters=parameters, 
+            main_screen=main_screen, 
+            clock=clock, 
+            speed=speed, 
+            epoch=i, 
+            iteration=iteration, 
+            agent="Reinforce"
+        )
         # Update the agent's network using the buffer data
         iterator = iter(replay_buffer.as_dataset(sample_batch_size=1))
         trajectories, _ = next(iterator)
@@ -201,7 +215,7 @@ def train_reinforce(main_screen: Surface, clock: Clock, speed: int, parameters: 
             losses.append(train_loss.loss.numpy())
             print('step = {0}: loss = {1}'.format(step, train_loss.loss))
 
-        if step % parameters.eval_interval == 0:
+        if step % parameters.eval_interval == 0 and step != 0:
             avg_return = compute_avg_return(eval_environment, reinforce_agent.policy, parameters.num_eval_episodes, main_screen, clock, speed, i, iteration, "Reinforce")
             print('step = {0}: Average Return = {1}'.format(step, avg_return))
             returns.append(avg_return)
