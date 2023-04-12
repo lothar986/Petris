@@ -28,15 +28,15 @@ class Parameters:
         self.params = self.data.params
         self.iterations = self.data.iterations
 
-        os.makedirs("../../results/original", exist_ok=True)
-        with open(f'../../results/original/{self.hash}','w') as file:
+        os.makedirs("./results/original", exist_ok=True)
+        with open(f'./results/original/{self.hash}.json','w') as file:
             file.write(json.dumps({
                 'agent': self.agent,
                 'hash': self.hash,
                 'params': self.params,
                 'iterations': self.iterations
             }))
-        if os.path.isfile(f'../../results/original/{self.hash}'):
+        if os.path.isfile(f'../../results/original/{self.hash}.json'):
             logger.info("Copy of input file created successfully. Parameters Enabled!") 
         else:
             logger.error("Copy of input file not found. Double check before editing input file!") 

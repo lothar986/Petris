@@ -131,13 +131,13 @@ def save_many_plots(x: List[List[int]],
     save_plt_as_image(title=title)
 
 def save_results(avg_returns: list[float], losses: list[float],iteration: int, parameters: Parameters) -> None:
-    os.makedirs(f"../../results/{parameters.agent}", exist_ok=True)
+    os.makedirs(f"./results/{parameters.agent}", exist_ok=True)
     output = parameters.format_output()
     output.results = {
         'returns': avg_returns,
         'loss': losses
     }
-    fileName = f'../../results/{parameters.agent}/{parameters.hash}_{iteration}'
+    fileName = f'./results/{parameters.agent}/{parameters.hash}_{iteration}'
 
     open(fileName,'w').write(json.dumps(output))
 

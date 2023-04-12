@@ -72,9 +72,9 @@ class PetrisEnvironment(PyEnvironment):
         self._total_reward = 0
 
         self._collision_detected = False
-
-        self._down_reward = 0
         
+    def collision_detected(self) -> bool:
+        return self._collision_detected
 
     def action_spec(self) -> BoundedArraySpec:
         return self._action_spec
@@ -91,16 +91,12 @@ class PetrisEnvironment(PyEnvironment):
         """
 
         if action == Action.MOVE_DOWN:
-            #print("down")
             move_down()
         elif action == Action.MOVE_RIGHT:
-            #print("right")
             move_right()
         elif action == Action.MOVE_LEFT:
-            #print("left")
             move_left()
         elif action == Action.ROTATE:
-            #print("rotate")
             rotate()
 
         # Update the state after action
@@ -162,7 +158,6 @@ class PetrisEnvironment(PyEnvironment):
         self._prev_lines_cleared = 0
         self._total_reward = 0
         self._point_collected = False
-        self._down_reward = 0
 
         
         return ts.restart(np.array([self._state], dtype=np.int32))

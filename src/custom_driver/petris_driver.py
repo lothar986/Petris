@@ -5,6 +5,7 @@ from typing import Any, Callable, Optional, Sequence, Tuple
 
 import numpy as np
 import logging
+import inspect
 from typing import List
 from tf_agents.drivers import driver
 from tf_agents.environments import py_environment
@@ -90,7 +91,11 @@ class PetrisDriver(driver.Driver):
       for observer in self._transition_observers:
         observer((time_step, action_step_with_previous_state, next_time_step))
       for observer in self.observers:
-        observer(traj)
+        observer_signature = inspect.signature(observer)
+        if "collision_detected" in observer_signature.parameters:
+            observer(traj, collision_detected=self.env._collision_detected)
+        else:
+            observer(traj)
 
       if self._end_episode_on_boundary:
         num_episodes += np.sum(traj.is_boundary())

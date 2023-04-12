@@ -117,12 +117,13 @@ def compute_avg_return(env: TFPyEnvironment, policy: TFPolicy, num_episodes: int
         keyboard_events : List[Event] = []
         time_step = env.reset()
         episode_return = 0.0
+        action_step = policy.get_initial_state(1)
 
         while not time_step.is_last():
             Scenes.active_scene.process_input(events=keyboard_events)
             keyboard_events = pygame.event.get()
 
-            action_step = policy.action(time_step)
+            action_step = policy.action(time_step, action_step)
             #logger.info("Manual steps (avg return)")
             time_step = env.step(action_step.action)
             episode_return += time_step.reward
@@ -145,16 +146,16 @@ def train_ppo(main_screen: Surface, clock: Clock, speed: int, parameters: Parame
         input_tensor_spec=train_env.observation_spec(),
         output_tensor_spec=train_env.action_spec(),
         lstm_size=tuple(int(x) for x in parameters.actor.ltsm_size),
-        input_fc_layer_params=tuple(int(x) for x in parameters.actor.input_layer),
-        output_fc_layer_params=tuple(int(x) for x in parameters.actor.output_layer),
+        input_fc_layer_params=tuple(int(x) for x in parameters.actor.input_layers),
+        output_fc_layer_params=tuple(int(x) for x in parameters.actor.output_layers),
         activation_fn=parameters.actor.activation
     )
 
     value_network = ValueRnnNetwork(
         input_tensor_spec=train_env.observation_spec(),
         lstm_size=tuple(int(x) for x in parameters.value.ltsm_size),
-        input_fc_layer_params=tuple(int(x) for x in parameters.value.input_layer),
-        output_fc_layer_params=tuple(int(x) for x in parameters.value.input_layer),
+        input_fc_layer_params=tuple(int(x) for x in parameters.value.input_layers),
+        output_fc_layer_params=tuple(int(x) for x in parameters.value.input_layers),
         activation_fn=parameters.value.activation
     )
 
@@ -164,7 +165,7 @@ def train_ppo(main_screen: Surface, clock: Clock, speed: int, parameters: Parame
 
     iterater = iter(replay_buffer.as_dataset(sample_batch_size=1))
 
-    checkpoint_dir = '../../checkpoints/ppo'
+    checkpoint_dir = './checkpoints/ppo'
     os.makedirs(checkpoint_dir, exist_ok=True)
 
     checkpoint = Checkpointer(
