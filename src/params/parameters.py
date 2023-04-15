@@ -36,7 +36,7 @@ class Parameters:
                 'params': self.params,
                 'iterations': self.iterations
             }))
-        if os.path.isfile(f'../../results/original/{self.hash}.json'):
+        if os.path.exists(f'./results/original/{self.hash}.json'):
             logger.info("Copy of input file created successfully. Parameters Enabled!") 
         else:
             logger.error("Copy of input file not found. Double check before editing input file!") 
@@ -57,7 +57,8 @@ class Parameters:
             json.dump(self.data, file, indent=4)
 
     def format_output(self) -> NestedDict:
-        output = self.data.pop('iterations')
+        output = self.data
+        del output.iterations
         output.parent_hash = self.hash
         return output
     

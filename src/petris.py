@@ -28,6 +28,7 @@ from src.agents.random_agent import play_random_agent
 from src.agents.dqn import play_dqn_agent
 from src.agents.ppo import train_ppo
 from src.agents.reinforce_agent import train_reinforce
+from src.metrics.metrics import Metrics
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
 
 logger = logging.getLogger(__name__)
@@ -79,11 +80,13 @@ def main(speed: int, paramFile: Optional[str] = None , debug: bool = False) -> i
         logger.info("Spinning up GUI")
         if paramFile and os.path.isfile(paramFile):
             parameters = Parameters(paramFile)
+            metrics = Metrics(parameters=parameters)
             if "index" not in parameters.iterations:
                 parameters.iterations.index = None
             agent = parameters.agent
             iterations = parameters.iterations.num_iterations if parameters.iterations and parameters.iterations.num_iterations > 0 else 1
             for iteration in range(iterations):
+                train_results = None
                 if agent and agent.lower() == "random":
                     play_random_agent(env=PetrisEnvironment(parameters=parameters), 
                                     main_screen=main_screen, 
@@ -92,19 +95,21 @@ def main(speed: int, paramFile: Optional[str] = None , debug: bool = False) -> i
                                     num_episodes=parameters.agent.epoch)
                 elif agent and agent.lower() == "dqn":
                     tf_env = TFPyEnvironment(environment=PetrisEnvironment(parameters=parameters))
-                    play_dqn_agent(env=tf_env, main_screen=main_screen, clock=clock, speed=speed)
+                    train_results = play_dqn_agent(env=tf_env, main_screen=main_screen, clock=clock, speed=speed)
                 elif agent and agent.lower() == "reinforce":
-                    print("Training Reinforce")
-                    train_reinforce(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters, iteration=iteration)
+                    logger.info("Training Reinforce")
+                    train_results = train_reinforce(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters,metrics=metrics, iteration=iteration)
                 elif agent and agent.lower() == "ppo":
-                    print("Training PPO")
-                    train_ppo(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters, iteration=iteration)
+                    logger.info("Training PPO")
+                    train_results = train_ppo(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters, metrics=metrics, iteration=iteration)
                 prev = get_nested_value(parameters.params,parameters.iterations.to_change, parameters.iterations.index)
                 parameters.update_param(
                     parameters.iterations.to_change, 
                     prev + parameters.iterations.delta,
                     parameters.iterations.index
                 )
+                metrics.finish_iteration(train_results)
+            metrics.finish_training()
         else:
             logger.info('No parameters found, playing game instead')
             play_game(main_screen=main_screen, clock=clock, speed=speed)

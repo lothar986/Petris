@@ -23,3 +23,8 @@ class MetricsObserver:
         avg_heatmap = self.tetris_heatmap / max_placements if max_placements > 0 else self.tetris_heatmap
         heatmap_df = pd.DataFrame(avg_heatmap, columns=[f"col_{i}" for i in range(10)])
         return heatmap_df
+    
+    def reset(self) -> None:
+        self.tetris_heatmap = np.zeros((20, 10), dtype=int)
+        self.total_placements = 0
+        self.lines_placed = -1

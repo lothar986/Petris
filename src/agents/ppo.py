@@ -117,13 +117,12 @@ def compute_avg_return(env: TFPyEnvironment, policy: TFPolicy, num_episodes: int
         keyboard_events : List[Event] = []
         time_step = env.reset()
         episode_return = 0.0
-        action_step = policy.get_initial_state(1)
 
         while not time_step.is_last():
             Scenes.active_scene.process_input(events=keyboard_events)
             keyboard_events = pygame.event.get()
 
-            action_step = policy.action(time_step, action_step)
+            action_step = policy.action(time_step)
             #logger.info("Manual steps (avg return)")
             time_step = env.step(action_step.action)
             episode_return += time_step.reward

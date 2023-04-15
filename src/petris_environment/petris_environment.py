@@ -72,6 +72,8 @@ class PetrisEnvironment(PyEnvironment):
         self._total_reward = 0
 
         self._collision_detected = False
+
+        self._down_reward = 0
         
     def collision_detected(self) -> bool:
         return self._collision_detected
@@ -158,7 +160,7 @@ class PetrisEnvironment(PyEnvironment):
         self._prev_lines_cleared = 0
         self._total_reward = 0
         self._point_collected = False
-
+        self._down_reward = 0
         
         return ts.restart(np.array([self._state], dtype=np.int32))
 
@@ -171,10 +173,8 @@ class PetrisEnvironment(PyEnvironment):
         # TODO: Add line limit to end the game.
         
         if self._episode_ended:
-            print("Restarting")
             return self.reset()
         if self._game_scene.game_over:
-            print("Game over")
             self._state = np.squeeze(np.array(self._game_scene.tetris_map).flatten().tolist())
             logger.info(f"Episode Ended. Reward given: {self._total_reward - self._parameters.game_over_penalty}")
             self._episode_ended = True
