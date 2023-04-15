@@ -80,35 +80,34 @@ class Metrics():
         ggsave(loss_plot, f'./results/{self._parameters.agent}/graphs/loss/{self._parameters.hash}_{self._iteration}.png')
 
     def _generate_return_delta_plot(self) -> None: #dont know if works
-        # concatenate DataFrames into a single DataFrame
-        training_results = pd.concat([df[df['return'] != -1.00].reset_index(drop=True) for df in self._training_results_collection], axis=1)
+        # Calculate the mean return value for each DataFrame
+        avg_return_list = [df[df['return'] != -1.00]['return'].mean() for df in self._training_results_collection]
+        
+        # Calculate the reward delta for each iteration
+        reward_delta = [avg_return_list[i] - avg_return_list[i - 1] for i in range(1, len(avg_return_list))]
+        
+        # Create a new DataFrame with reward delta values and epoch numbers
+        reward_delta_df = pd.DataFrame({'epoch': range(1, len(avg_return_list)), 'reward_delta': reward_delta})
 
-        # calculate the mean return value for each epoch
-        avg_return = training_results.groupby(training_results.index // len(self._training_results_collection)).mean()['return']
-        print(avg_return)
-        # calculate the reward delta for each iteration
-        reward_delta = avg_return.diff(axis=1).values
-        print(reward_delta)
-        reward_delta_df = pd.DataFrame({'epoch': range(1, len(avg_return)), 'delta': reward_delta})
-
-        # create the reward delta plot
-        return_delta_plot = (ggplot(reward_delta_df, aes(x='epoch', y='return'))
-            + geom_line(color='blue')
+        # Create the reward delta plot
+        return_delta_plot = (ggplot(reward_delta_df, aes(x='epoch', y='reward_delta'))
+            + geom_point(color='blue')
             + ggtitle('Reward Delta per Iteration')
             )
         
         ggsave(return_delta_plot, f'./results/{self._parameters.agent}/graphs/delta/{self._parameters.hash}_{self._iteration}.png')
 
     def _generate_lines_plot(self) -> None:
-        # combine all of the DataFrames into a single DataFrame
-        df_combined = pd.concat(dfs, keys=range(len(dfs)))
+        # Add an 'iteration' column to each DataFrame and concatenate all DataFrames
+        all_results = pd.concat([df.assign(iteration=i) for i, df in enumerate(self._training_results_collection)], ignore_index=True)
 
-        # reset the index and rename the level 0 index
-        df_combined = df_combined.reset_index().rename(columns={'level_0': 'iteration'})
-
-        # create the plot
-        lines_plot = ggplot(df_combined, aes(x='iteration', y='lines', group='level_1', color='level_1')) + geom_line()
-        ggsave(lines_plot, f'./results/{self._parameters.agent}/graphs/lines/{self._parameters.hash}_{self._iteration}.png')
+        # Create the lines_cleared plot with multiple lines, one for each iteration
+        lines_cleared_plot = (ggplot(all_results, aes(x='epoch', y='lines_cleared', group='iteration'))
+            + geom_line()
+            + ggtitle('Lines Cleared per Epoch')
+            + facet_wrap('~iteration', nrow=1)
+            )
+        ggsave(lines_cleared_plot, f'./results/{self._parameters.agent}/graphs/lines/{self._parameters.hash}_{self._iteration}.png')
 
 
     def _save_results(self) -> None:

@@ -24,6 +24,7 @@ from tensorflow import keras
 from pygame.time import Clock
 from pygame.surface import Surface
 from pygame.event import Event
+from pandas import DataFrame,concat
 from tf_agents.environments.tf_py_environment import TFPyEnvironment
 from tf_agents.policies.tf_policy import TFPolicy
 from tf_agents.environments.utils import validate_py_environment
@@ -34,6 +35,7 @@ from tf_agents.utils.common import Checkpointer
 from src.params.parameters import Parameters
 from src.metrics.save_metrics import plot_one, save_json, save_results
 from src.custom_driver.petris_driver import PetrisDriver
+from src.metrics.metrics import Metrics
 from src.petris_environment.petris_environment import PetrisEnvironment
 from src.scenes.scenes import GameScene, Scenes, TitleScene
 from src.game_runner.game_runner import render_active_scene
@@ -93,7 +95,24 @@ def collect_episode(env: PetrisEnvironment, policy, rb_observer, parameters, mai
     policy_state = policy.get_initial_state(batch_size=1)
     driver.run(main_screen, clock, speed, epoch, iteration, time_step, policy_state)
 
-def create_ppo(env: TFPyEnvironment, actor_network: ActorDistributionRnnNetwork, value_network: ValueRnnNetwork, parameters: Parameters) -> PPOAgent:
+def create_ppo(env: TFPyEnvironment, parameters: Parameters) -> PPOAgent:
+    actor_network = ActorDistributionRnnNetwork(
+        input_tensor_spec=env.observation_spec(),
+        output_tensor_spec=env.action_spec(),
+        lstm_size=tuple(int(x) for x in parameters.actor.ltsm_size),
+        input_fc_layer_params=tuple(int(x) for x in parameters.actor.input_layers),
+        output_fc_layer_params=tuple(int(x) for x in parameters.actor.output_layers),
+        activation_fn=parameters.actor.activation
+    )
+
+    value_network = ValueRnnNetwork(
+        input_tensor_spec=env.observation_spec(),
+        lstm_size=tuple(int(x) for x in parameters.value.ltsm_size),
+        input_fc_layer_params=tuple(int(x) for x in parameters.value.input_layers),
+        output_fc_layer_params=tuple(int(x) for x in parameters.value.input_layers),
+        activation_fn=parameters.value.activation
+    )
+
     agent = PPOAgent(
         env.time_step_spec(),
         env.action_spec(),
@@ -117,13 +136,12 @@ def compute_avg_return(env: TFPyEnvironment, policy: TFPolicy, num_episodes: int
         keyboard_events : List[Event] = []
         time_step = env.reset()
         episode_return = 0.0
+        policy_state = policy.get_initial_state(env.batch_size)
 
         while not time_step.is_last():
             Scenes.active_scene.process_input(events=keyboard_events)
             keyboard_events = pygame.event.get()
-
-            action_step = policy.action(time_step)
-            #logger.info("Manual steps (avg return)")
+            action_step = policy.action(time_step=time_step,policy_state=policy_state)
             time_step = env.step(action_step.action)
             episode_return += time_step.reward
             render_active_scene(main_screen=main_screen, clock=clock, speed=speed)
@@ -132,7 +150,7 @@ def compute_avg_return(env: TFPyEnvironment, policy: TFPolicy, num_episodes: int
     avg_return = total_return / num_episodes
     return avg_return.numpy()[0]
 
-def train_ppo(main_screen: Surface, clock: Clock, speed: int, parameters: Parameters, iteration: int) -> None:
+def train_ppo(main_screen: Surface, clock: Clock, speed: int, metrics: Metrics, parameters: Parameters, iteration: int) -> None:
 
     env = PetrisEnvironment(parameters=parameters)
     train_env = TFPyEnvironment(environment=env)
@@ -141,44 +159,15 @@ def train_ppo(main_screen: Surface, clock: Clock, speed: int, parameters: Parame
     result_parameters = parameters
     parameters = parameters.params.agent
 
-    actor_network = ActorDistributionRnnNetwork(
-        input_tensor_spec=train_env.observation_spec(),
-        output_tensor_spec=train_env.action_spec(),
-        lstm_size=tuple(int(x) for x in parameters.actor.ltsm_size),
-        input_fc_layer_params=tuple(int(x) for x in parameters.actor.input_layers),
-        output_fc_layer_params=tuple(int(x) for x in parameters.actor.output_layers),
-        activation_fn=parameters.actor.activation
-    )
-
-    value_network = ValueRnnNetwork(
-        input_tensor_spec=train_env.observation_spec(),
-        lstm_size=tuple(int(x) for x in parameters.value.ltsm_size),
-        input_fc_layer_params=tuple(int(x) for x in parameters.value.input_layers),
-        output_fc_layer_params=tuple(int(x) for x in parameters.value.input_layers),
-        activation_fn=parameters.value.activation
-    )
-
-    agent = create_ppo(train_env, actor_network, value_network, parameters)
+    agent = create_ppo(train_env, parameters)
 
     replay_buffer, rb_observer = create_replay_buffer(agent)
 
     iterater = iter(replay_buffer.as_dataset(sample_batch_size=1))
 
-    checkpoint_dir = './checkpoints/ppo'
-    os.makedirs(checkpoint_dir, exist_ok=True)
-
-    checkpoint = Checkpointer(
-        ckpt_dir=checkpoint_dir,
-        max_to_keep=5,
-        agent=agent,
-        policy=agent.policy,
-        global_step=agent.train_step_counter
-    )
-
-    avg_return =  0.00 #compute_avg_return(eval_env, agent.policy, parameters.num_eval_episodes, main_screen, clock, speed, 0, iteration, "PPO")
-    average_returns = [avg_return]
-    losses = [0.00]
-    train_loss = 0
+    avg_return =  compute_avg_return(eval_env, agent.policy, parameters.num_eval_episodes, main_screen, clock, speed, 0, iteration, "PPO")
+    loss = 0.00
+    output_data = DataFrame(data=[[0,avg_return,loss,0]], columns=['epoch','return','loss','lines_cleared'])
 
     for i in range(parameters.epochs):
         logger.info(f'Episode {i}\n')
@@ -195,7 +184,6 @@ def train_ppo(main_screen: Surface, clock: Clock, speed: int, parameters: Parame
             iteration=iteration, 
             agent="PPO"
         )
-        logger.info(f"Starting traing for epoch {i}")
 
         experience, _ = next(iterater)
         start_time = time.time()
@@ -208,14 +196,12 @@ def train_ppo(main_screen: Surface, clock: Clock, speed: int, parameters: Parame
 
         step = agent.train_step_counter.numpy()
 
-        if step % parameters.log_interval == 0:
-            losses.append(train_loss.loss.numpy())
-            logger.info('step = {0} |loss = {1}'.format(step, train_loss.loss))
+        loss = train_loss.loss.numpy()
 
         if step % parameters.eval_interval == 0 and step != 0:
             avg_return = compute_avg_return(eval_env, agent.policy, parameters.num_eval_episodes, main_screen, clock, speed, i, iteration, "PPO")
-            average_returns.append(avg_return)
-            logger.info('Iteration = {} | Loss = {} | Average Return = {}'.format(i, train_loss.loss, avg_return))
-        if step % parameters.save_interval == 0  and step != 0:
-            checkpoint.save(global_step=agent.train_step_counter.numpy())
-    save_results(average_returns,losses,iteration,result_parameters)
+            logger.info('Iteration = {} | Loss = {} | Average Return = {}'.format(i, loss, avg_return))
+
+        append = DataFrame(data=[[i+1,avg_return,loss,metrics.metrics_observer().lines_placed]], columns=['epoch','return','loss','lines_cleared'])
+        output_data = concat([output_data,append], ignore_index=True)
+    return output_data

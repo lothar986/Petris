@@ -29,7 +29,6 @@ from tf_agents.utils import common
 from src.params.parameters import Parameters
 from src.metrics.save_metrics import plot_one, save_json
 from src.metrics.metrics import Metrics
-from src.observers.metrics_observer import MetricsObserver
 from src.custom_driver.petris_driver import PetrisDriver
 from src.scenes.scenes import GameScene, Scenes, TitleScene
 from src.game_runner.game_runner import render_active_scene
@@ -113,17 +112,6 @@ def compute_avg_return(env: TFPyEnvironment, policy, num_episodes, main_screen, 
 
     avg_return = total_return / num_episodes
     return avg_return.numpy()[0]
-
-
-def visualize_metrics(metric, num_epochs, num_evaluations, iteration, is_loss):
-    steps = range(0, num_epochs + 1, num_evaluations)
-
-    if (is_loss == True):
-        plot_one(x=steps, y=metric,x_label='Number of Training Steps',y_label='Training Loss',title="Training Loss Per Train Step; Iteration - "+str(iteration),save=True)
-    else:
-        plot_one(x=steps, y=metric,x_label='Number of Training Steps',y_label='Average Return',title="Average Return Per Train Step; Iteration - "+str(iteration),save=True)
-
-    save_json(results=metric, iteration=iteration, is_loss=is_loss)
 
 def create_reinforce(env: TFPyEnvironment, parameters: Parameters) -> reinforce_agent.ReinforceAgent:
     logger.info("Creating agent")

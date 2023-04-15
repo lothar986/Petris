@@ -98,7 +98,7 @@ def main(speed: int, paramFile: Optional[str] = None , debug: bool = False) -> i
                     train_results = play_dqn_agent(env=tf_env, main_screen=main_screen, clock=clock, speed=speed)
                 elif agent and agent.lower() == "reinforce":
                     logger.info("Training Reinforce")
-                    train_results = train_reinforce(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters,metrics=metrics, iteration=iteration)
+                    train_results = train_reinforce(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters, metrics=metrics, iteration=iteration)
                 elif agent and agent.lower() == "ppo":
                     logger.info("Training PPO")
                     train_results = train_ppo(main_screen=main_screen, clock=clock, speed=speed, parameters=parameters, metrics=metrics, iteration=iteration)
